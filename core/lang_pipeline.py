@@ -1442,7 +1442,7 @@ def generate_lang_files(
 ) -> List[Dict[str, str]]:
     """
     Повертає список: [{"domain": ..., "content": "..."}]
-    template_kind: "template_1" або "template_2"
+    template_kind: "template_1" | "template_2" | "template_3"
     """
     client = _get_openai_client()
     template = template_bytes.decode("utf-8", errors="replace")
@@ -1558,53 +1558,6 @@ def generate_lang_files(
                 outs = _llm_transform_strings_onepass(client, model, strings, target_lang)
                 content = _apply_strings(content, spans, outs)
 
-            # 2) Тепер override MANUAL змінних — гарантуємо структуру/плейсхолдери
-            content = _set_php_var(content, "site_name", brand, numeric=False)
-            content = _set_php_var(content, "site_url", f"https://{domain}", numeric=False)
-            content = _set_php_var(content, "rating_value", str(rating_value), numeric=True)
-            content = _set_php_var(content, "rating_count", str(rating_count), numeric=True)
-            content = _set_php_var(content, "app_price", str(price), numeric=True)
-            content = _set_php_var(content, "app_currency", currency_code, numeric=False)
-            content = _set_php_var(content, "site_lang", target_lang, numeric=False)
-
-            # Optional small override for UA "Like"
-            if target_lang.lower().startswith("uk"):
-                content = _set_php_var(content, "single_test1_i", "Подобається", numeric=False)
-
-            # 3) LLM-generated MANUAL texts (names + headings/title/description)
-            for k in (
-                "hero_main_heading",
-                "hero_main_highlight",
-                "main_title",
-                "main_description",
-                "test1_name",
-                "test2_name",
-                "test3_name",
-                "test4_name",
-                "test5_name",
-                "test6_name",
-                "single_test1_name",
-                "single_test2_name",
-                "single_test3_name",
-            ):
-                v = (gen2.get(k) or "").strip()
-                if v:
-                    content = _set_php_var(content, k, v, numeric=False)
-
-            # 4) profits MUST be formatted by code (no cents, comma thousands, localized currency word)
-            content = _set_php_var(content, "test1_profit", _fmt_money(profit_amounts["test1_profit"], currency_code), numeric=False)
-            content = _set_php_var(content, "test2_profit", _fmt_money(profit_amounts["test2_profit"], currency_code), numeric=False)
-            content = _set_php_var(content, "test3_profit", _fmt_money(profit_amounts["test3_profit"], currency_code), numeric=False)
-            content = _set_php_var(content, "test4_profit", _fmt_money(profit_amounts["test4_profit"], currency_code), numeric=False)
-            content = _set_php_var(content, "test5_profit", _fmt_money(profit_amounts["test5_profit"], currency_code), numeric=False)
-            content = _set_php_var(content, "test6_profit", _fmt_money(profit_amounts["test6_profit"], currency_code), numeric=False)
-
-        if progress_cb:
-            progress_cb(idx / total, f"Готово: {domain}")
-
-        out_files.append({"domain": domain, "content": content})
-
-
         # -------------------------
         # TEMPLATE 3
         # -------------------------
@@ -1656,6 +1609,55 @@ def generate_lang_files(
             if strings:
                 outs = _llm_transform_strings_onepass(client, model, strings, target_lang)
                 content = _apply_strings(content, spans, outs)
+
+            
+            # 2) Тепер override MANUAL змінних — гарантуємо структуру/плейсхолдери
+            content = _set_php_var(content, "site_name", brand, numeric=False)
+            content = _set_php_var(content, "site_url", f"https://{domain}", numeric=False)
+            content = _set_php_var(content, "rating_value", str(rating_value), numeric=True)
+            content = _set_php_var(content, "rating_count", str(rating_count), numeric=True)
+            content = _set_php_var(content, "app_price", str(price), numeric=True)
+            content = _set_php_var(content, "app_currency", currency_code, numeric=False)
+            content = _set_php_var(content, "site_lang", target_lang, numeric=False)
+
+            # Optional small override for UA "Like"
+            if target_lang.lower().startswith("uk"):
+                content = _set_php_var(content, "single_test1_i", "Подобається", numeric=False)
+
+            # 3) LLM-generated MANUAL texts (names + headings/title/description)
+            for k in (
+                "hero_main_heading",
+                "hero_main_highlight",
+                "main_title",
+                "main_description",
+                "test1_name",
+                "test2_name",
+                "test3_name",
+                "test4_name",
+                "test5_name",
+                "test6_name",
+                "single_test1_name",
+                "single_test2_name",
+                "single_test3_name",
+            ):
+                v = (gen2.get(k) or "").strip()
+                if v:
+                    content = _set_php_var(content, k, v, numeric=False)
+
+            # 4) profits MUST be formatted by code (no cents, comma thousands, localized currency word)
+            content = _set_php_var(content, "test1_profit", _fmt_money(profit_amounts["test1_profit"], currency_code), numeric=False)
+            content = _set_php_var(content, "test2_profit", _fmt_money(profit_amounts["test2_profit"], currency_code), numeric=False)
+            content = _set_php_var(content, "test3_profit", _fmt_money(profit_amounts["test3_profit"], currency_code), numeric=False)
+            content = _set_php_var(content, "test4_profit", _fmt_money(profit_amounts["test4_profit"], currency_code), numeric=False)
+            content = _set_php_var(content, "test5_profit", _fmt_money(profit_amounts["test5_profit"], currency_code), numeric=False)
+            content = _set_php_var(content, "test6_profit", _fmt_money(profit_amounts["test6_profit"], currency_code), numeric=False)
+
+        if progress_cb:
+            progress_cb(idx / total, f"Готово: {domain}")
+
+        out_files.append({"domain": domain, "content": content})
+
+
 
     
     return out_files
