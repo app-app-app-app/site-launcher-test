@@ -1050,6 +1050,10 @@ def _is_string_safe_to_transform(s: str) -> bool:
     return True
 
 
+def _extract_php_array_strings(content):
+    pattern = r'\[\s*"([^"]+)"'
+    return re.findall(pattern, content)
+
 def _extract_strings(content: str) -> Tuple[List[str], List[Tuple[int, int]]]:
     """
     1) Рядки у присвоєннях: $x = "..."; та $lang['k'] = '...';
@@ -1188,6 +1192,17 @@ def _apply_strings(content: str, spans: List[Tuple[int, int]], outs: List[str]) 
         content = content[:start] + _escape_php_string(new_text) + content[end:]
     return content
 
+
+gender_map = {
+    "feedback_description_1": "female",
+    "feedback_description_2": "female",
+    "feedback_description_3": "male",
+    "feedback_description_4": "female",
+    "feedback_description_5": "male",
+    "feedback_description_6": "male",
+}
+
+
 def _llm_transform_strings_onepass(
     client: OpenAI,
     model: str,
@@ -1208,11 +1223,14 @@ def _llm_transform_strings_onepass(
         protected_list.append(ps)
         maps.append(mp)
 
+    country_name = geo_defaults[cc]["name"]
+    
     system = (
         "You are processing a list of website phrases. "
         "Return ONLY strict JSON: {\"out\": [\"...\", \"...\"]}. "
         f"The output language MUST be strictly ISO language code: {target_lang}. "
         "Translate EVERY string to the target language. Even single words like 'Name', 'Contact', 'Email', 'Join'. Do not keep any words from the original language."
+        "The website is for users in {country_name}. Do not change the country. If a country appears in text, replace it with the correct form of {country_name}."
         "Do NOT mix languages. "
         "Rules:\n"
         "1) Length of 'out' equals length of 'in'.\n"
@@ -1220,6 +1238,8 @@ def _llm_transform_strings_onepass(
         "3) Do NOT modify tokens like __PH0__, __PH1__.\n"
         "4) Return only plain strings inside JSON.\n"
         "5) No explanations."
+        "6) Some strings are user reviews. Gender order:1 female, 2 female, 3 male, 4 female, 5 male, 6 male.  Ensure the translation keeps the correct gender."
+        
     )
 
     task = (
