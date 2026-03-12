@@ -1224,7 +1224,7 @@ def _llm_transform_strings_onepass(
         protected_list.append(ps)
         maps.append(mp)
 
-    country_name = cc if cc != "UNKNOWN" else "Unknown"
+    country_name = geo_code if geo_code != "UNKNOWN" else "Unknown"
     
     system = (
         "You are processing a list of website phrases. "
