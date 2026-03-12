@@ -1209,6 +1209,7 @@ def _llm_transform_strings_onepass(
     model: str,
     strings: List[str],
     target_lang: str,
+    geo_code: str,
 ) -> List[str]:
     """
     1 LLM-запит на весь список рядків.
@@ -1231,7 +1232,7 @@ def _llm_transform_strings_onepass(
         "Return ONLY strict JSON: {\"out\": [\"...\", \"...\"]}. "
         f"The output language MUST be strictly ISO language code: {target_lang}. "
         "Translate EVERY string to the target language. Even single words like 'Name', 'Contact', 'Email', 'Join'. Do not keep any words from the original language."
-        "The website is for users in {country_name}. Do not change the country. If a country appears in text, replace it with the correct form of {country_name}."
+        f"The website is for users in {country_name}. Do not change the country. If a country appears in text, replace it with the correct form"
         "Do NOT mix languages. "
         "Rules:\n"
         "1) Length of 'out' equals length of 'in'.\n"
@@ -1541,7 +1542,7 @@ def generate_lang_files(
 
             strings, spans = _extract_strings(content)
             if strings:
-                outs = _llm_transform_strings_onepass(client, model, strings, target_lang)
+                outs = _llm_transform_strings_onepass(client, model, strings, target_lang, geo_code)
                 content = _apply_strings(content, spans, outs)
 
         
@@ -1740,7 +1741,7 @@ def generate_lang_files_multi(
     template1_bytes: bytes,
     template2_bytes: bytes,
     template3_bytes: bytes,
-    geo_code: Optional[str],
+    geo_code: Optional[str],def _llm_transform_strings_onepass(
     geo_currency: str,
     target_lang: str,
     domains: List[str],
