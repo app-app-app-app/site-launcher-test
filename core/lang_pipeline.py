@@ -1610,6 +1610,7 @@ def generate_lang_files(
 def generate_lang_files_multi(
     template1_bytes: bytes,
     template2_bytes: bytes,
+    template3_bytes: bytes,
     geo_code: Optional[str],
     geo_currency: str,
     target_lang: str,
