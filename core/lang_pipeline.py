@@ -32,12 +32,12 @@ SPECIAL_STRING = {
     "feedback_strong_2",
     "feedback_strong_3",
     "feedback_strong_4",
+    "feedback_strong_5",
+    "feedback_strong_6",
     "page_title_main",
     "page_description_main",
-    "site_name",  # важливо: у нас має бути "$source"
-,
-    "feedback_strong_5",
-    "feedback_strong_6"}
+    "site_name",
+}
 
 CURRENCY_FALLBACK = {
     # Base
