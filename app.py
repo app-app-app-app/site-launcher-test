@@ -72,6 +72,12 @@ TEMPLATES = {
         "favicon": "templates/template_2/favicon.svg",
         "lang": "templates/template_2/lang.php",
     },
+        "template_3": {
+        "label": "Шаблон 3",
+        "dir": "templates/template_3",
+        "favicon": "templates/template_3/favicon.svg",
+        "lang": "templates/template_3/lang.php",
+    },
 }
 # Default template for Streamlit page icon (does not affect per-domain selection)
 DEFAULT_PAGE_TEMPLATE = "template_1"
@@ -1625,6 +1631,8 @@ elif st.session_state.step == 3:
                 template1_bytes = f.read()
             with open(TEMPLATES["template_2"]["lang"], "rb") as f:
                 template2_bytes = f.read()
+            with open(TEMPLATES["template_3"]["lang"], "rb") as f:
+                template3_bytes = f.read()
 
             if "domain_templates" not in st.session_state:
                 st.session_state["domain_templates"] = {}
@@ -1632,7 +1640,8 @@ elif st.session_state.step == 3:
             dt = st.session_state["domain_templates"]
             for i_d, d in enumerate(domains):
                 if d not in dt:
-                    dt[d] = "template_1" if (i_d % 2 == 0) else "template_2"
+                    templates_cycle = ["template_1", "template_3", "template_2"]
+                    dt[d] = templates_cycle[idx % 3]
 
             for k in list(dt.keys()):
                 if k not in domains:
@@ -1673,6 +1682,7 @@ elif st.session_state.step == 3:
                         files = generate_lang_files_multi(
                             template1_bytes=template1_bytes,
                             template2_bytes=template2_bytes,
+                            template3_bytes=template3_bytes,
                             domain_templates=st.session_state["domain_templates"],
                             geo_code=geo_code,
                             geo_currency=geo_currency,
