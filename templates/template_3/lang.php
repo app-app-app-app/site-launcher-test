@@ -136,9 +136,7 @@ $adv3_text = "La tecnologia blockchain garantisce a tutti i partecipanti un tass
 
 $statistics_badge = "Statistiche";
 $statistics_title = "Numeri che parlano da soli";
-$statistics_description_top = "La trasparenza è il nostro principio fondante. I ricavi giornalieri della piattaforma e il volume di investimenti in costante crescita confermano la stabilità e l'affidabilità del nostro progetto
-<br>
-La nostra strategia segreta di trading azionario si basa su un portafoglio attentamente selezionato, creato analizzando migliaia di aziende leader";
+$statistics_description_top = "La trasparenza è il nostro principio fondante. I ricavi giornalieri della piattaforma e il volume di investimenti in costante crescita confermano la stabilità e l'affidabilità del nostro progetto. La nostra strategia segreta di trading azionario si basa su un portafoglio attentamente selezionato, creato analizzando migliaia di aziende leader";
 $stat1_value = "1,45 €";
 $stat1_denomination = "Milioni";
 $stat1_title = "Investimenti attuali";
