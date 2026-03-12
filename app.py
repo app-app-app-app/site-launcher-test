@@ -1789,7 +1789,7 @@ elif st.session_state.step == 3:
 
                 domain_to_template_dir = {}
                 for i, d in enumerate(domains):
-                    tpl_id = dt.get(d) or ("template_1" if i % 2 == 0 else "template_2")
+                    tpl_id = dt.get(d, "template_1")
                     domain_to_template_dir[d] = TEMPLATE_DIRS.get(tpl_id, TEMPLATE_DIRS["template_1"])
 
                 _need_dirs = sorted({str(p) for p in domain_to_template_dir.values() if p})
@@ -1805,12 +1805,14 @@ elif st.session_state.step == 3:
                                 st.session_state["generated_site_zips"] = {}
                             
                             domain_to_template_dir = {}
+                            
                             for i, d in enumerate(domains):
                                 tpl_id = dt.get(d) or ("template_1" if i % 2 == 0 else "template_2")
                                 domain_to_template_dir[d] = TEMPLATE_DIRS.get(tpl_id, TEMPLATE_DIRS["template_1"])
                             
                             _need_dirs = sorted({str(p) for p in domain_to_template_dir.values() if p})
                             _missing = [p for p in _need_dirs if not os.path.isdir(p)]
+                            
                             if _missing:
                                 st.error("Не знайдено папки шаблонів: " + ", ".join(_missing))
                             else:
@@ -1818,7 +1820,6 @@ elif st.session_state.step == 3:
                                     domain = item["domain"]
                             
                                     try:
-                                        # Генеруємо zip тільки якщо його ще нема в session_state
                                         if domain not in st.session_state["generated_site_zips"]:
                                             st.session_state["generated_site_zips"][domain] = build_domain_site_zip(
                                                 domain=domain,
@@ -1846,10 +1847,6 @@ elif st.session_state.step == 3:
                                         st.warning(f"Не вдалося зібрати сайт для {domain}: {e}")
                             
                             st.session_state["archives_ready"] = True
-                        except Exception as e:
-                            st.warning(f"Не вдалося зібрати сайт для {domain}: {e}")
-
-                st.session_state["archives_ready"] = True
 
             # --- REVIEW GENERATION ---
             should_autogen_review = (
