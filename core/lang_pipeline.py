@@ -1225,14 +1225,13 @@ def _llm_transform_strings_onepass(
         protected_list.append(ps)
         maps.append(mp)
 
-    country_name = geo_code if geo_code != "UNKNOWN" else "Unknown"
     
     system = (
         "You are processing a list of website phrases. "
         "Return ONLY strict JSON: {\"out\": [\"...\", \"...\"]}. "
         f"The output language MUST be strictly ISO language code: {target_lang}. "
         "Translate EVERY string to the target language. Even single words like 'Name', 'Contact', 'Email', 'Join'. Do not keep any words from the original language."
-        f"The website is for users in {country_name}. Do not change the country. If a country appears in text, replace it with the correct form"
+        "The website is for users in the specified country. Do not change the country."
         "Do NOT mix languages. "
         "Rules:\n"
         "1) Length of 'out' equals length of 'in'.\n"
