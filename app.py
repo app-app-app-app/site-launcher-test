@@ -1641,7 +1641,7 @@ elif st.session_state.step == 3:
             for i_d, d in enumerate(domains):
                 if d not in dt:
                     templates_cycle = ["template_1", "template_3", "template_2"]
-                    dt[d] = templates_cycle[idx % 3]
+                    dt[d] = templates_cycle[i_d % 3]
 
             for k in list(dt.keys()):
                 if k not in domains:
@@ -1719,6 +1719,7 @@ elif st.session_state.step == 3:
                         files = generate_lang_files_multi(
                             template1_bytes=template1_bytes,
                             template2_bytes=template2_bytes,
+                            template3_bytes=template3_bytes,
                             domain_templates=st.session_state["domain_templates"],
                             geo_code=geo_code,
                             geo_currency=geo_currency,
@@ -1782,6 +1783,7 @@ elif st.session_state.step == 3:
                 TEMPLATE_DIRS = {
                     "template_1": Path("templates/template_1-1"),
                     "template_2": Path("templates/template_2"),
+                    "template_3": Path("templates/template_3"),
                 }
                 dt = st.session_state.get("domain_templates", {}) or {}
 
