@@ -1581,7 +1581,11 @@ def generate_lang_files(
         No last names.
         """
         
-            payload = {"country":cc}
+            payload = {
+                "country": cc,
+                "language": target_lang
+            }
+            
         
             names = _llm_json(client,model,system,payload).get("names",[])
         
