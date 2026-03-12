@@ -1507,7 +1507,7 @@ def generate_lang_files(
         # -------------------------
         # TEMPLATE 2 (fixed flow)
         # -------------------------
-        else:
+        elif template_kind in ("template_2", "t2", "template2", "2"):
             if progress_cb:
                 progress_cb((idx - 1) / total, f"Генерую MANUAL/імена/прибутки для {domain}…")
 
@@ -1604,6 +1604,60 @@ def generate_lang_files(
 
         out_files.append({"domain": domain, "content": content})
 
+
+        # -------------------------
+        # TEMPLATE 3
+        # -------------------------
+        elif template_kind in ("template_3", "t3", "template3", "3"):
+        
+            if progress_cb:
+                progress_cb((idx - 1) / total, f"Генерую спец-дані для {domain}…")
+        
+            rating_value = round(random.uniform(4.5, 5.0), 1)
+            rating_count = random.randint(300, 5000)
+            price = _make_price(geo_currency)
+        
+            content = _set_php_var(content, "site_name", "$source", numeric=False)
+            content = _set_php_var(content, "site_url", f"https://{domain}", numeric=False)
+            content = _set_php_var(content, "app_currency", geo_currency, numeric=False)
+            content = _set_php_var(content, "app_price", str(price), numeric=True)
+            content = _set_php_var(content, "rating_value", str(rating_value), numeric=True)
+            content = _set_php_var(content, "rating_count", str(rating_count), numeric=True)
+            content = _set_php_var(content, "site_lang", target_lang, numeric=False)
+        
+            # crypto image
+            CRYPTO_IMAGES = {
+                "IT":"italy.png",
+                "DE":"germany.png",
+                "PL":"poland.png",
+                "ES":"spain.png",
+                "GB":"united-kingdom.png",
+                "CZ":"czech.png",
+                "SE":"sweden.png",
+                "TR":"turkey.png",
+                "PT":"portugal.png",
+                "RO":"romania.png",
+                "AT":"austria.png",
+                "FR":"france.png",
+                "CA":"canada.png",
+                "CH":"switzerland.png"
+            }
+        
+            if cc in CRYPTO_IMAGES:
+                img = f"images/{CRYPTO_IMAGES[cc]}"
+            else:
+                img = "images/crypto_main.png"
+        
+            content = _set_php_var(content, "crypto_img", img, numeric=False)
+        
+            # переклад / унікалізація всіх текстів
+            strings, spans = _extract_strings(content)
+        
+            if strings:
+                outs = _llm_transform_strings_onepass(client, model, strings, target_lang)
+                content = _apply_strings(content, spans, outs)
+
+    
     return out_files
 
 
@@ -1622,7 +1676,7 @@ def generate_lang_files_multi(
 ) -> List[Dict[str, str]]:
     """
     Generate lang.php for multiple templates.
-    domain_templates maps domain -> "template_1" or "template_2"
+    domain_templates maps domain -> "template_1" | "template_2" | "template_3"
     """
     out: List[Dict[str, str]] = []
     # preserve order
@@ -1631,6 +1685,11 @@ def generate_lang_files_multi(
         if kind in ("template_2","t2","2","template2"):
             tpl = template2_bytes
             tk = "template_2"
+
+        elif kind in ("template_3","t3","3","template3"):
+            tpl = template3_bytes
+            tk = "template_3"
+
         else:
             tpl = template1_bytes
             tk = "template_1"
