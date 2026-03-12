@@ -1801,8 +1801,8 @@ elif st.session_state.step == 3:
                     for i, item in enumerate(files):
                         domain = item["domain"]
                             # 1 раз ініціалізуємо сховище архівів у session_state
-                        generated_site_zips" not in st.session_state:
-                        st.session_state["generated_site_zips"] = {}
+                        if "generated_site_zips" not in st.session_state:
+                            st.session_state["generated_site_zips"] = {}
                         
                         domain_to_template_dir = {}
                         
