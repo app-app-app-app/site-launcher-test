@@ -37,6 +37,7 @@ SPECIAL_STRING = {
     "page_title_main",
     "page_description_main",
     "site_name",
+    "crypto_img",
 }
 
 CURRENCY_FALLBACK = {
@@ -1527,7 +1528,7 @@ def generate_lang_files(
         # TEMPLATE 3
         # -------------------------
         elif template_kind == "template_3":
-        
+
             if progress_cb:
                 progress_cb((idx - 1) / total, f"Генерую дані template_3 для {domain}…")
         
@@ -1549,8 +1550,37 @@ def generate_lang_files(
             img = f"images/{CRYPTO_IMAGES.get(cc,'crypto_main.png')}"
             content = _set_php_var(content,"crypto_img",img,numeric=False)
         
-            # names generation
-            system = "Return JSON only: {\"names\": [\"Name1\",\"Name2\",\"Name3\",\"Name4\",\"Name5\",\"Name6\"]}. Generate realistic first names for the given country."
+            # SEO generation
+            gen = _generate_specials_via_llm(
+                client=client,
+                model=model,
+                domain=domain,
+                cc=cc,
+                target_lang=target_lang,
+            )
+        
+            content = _set_php_var(content,"adress_name",gen["adress_name"],numeric=False)
+            content = _set_php_var(content,"page_title_main",gen["page_title_main"],numeric=False)
+            content = _set_php_var(content,"page_description_main",gen["page_description_main"],numeric=False)
+        
+            # names generation with gender control
+            system = """
+        Return JSON only:
+        {"names":["name1","name2","name3","name4","name5","name6"]}
+        
+        Generate realistic FIRST NAMES for the given country.
+        
+        Gender order MUST be:
+        1 female
+        2 female
+        3 male
+        4 female
+        5 male
+        6 male
+        
+        No last names.
+        """
+        
             payload = {"country":cc}
         
             names = _llm_json(client,model,system,payload).get("names",[])
@@ -1565,7 +1595,6 @@ def generate_lang_files(
             content = _set_php_var(content,"feedback_strong_5",names[4],numeric=False)
             content = _set_php_var(content,"feedback_strong_6",names[5],numeric=False)
         
-            # translation
             strings,spans=_extract_strings(content)
         
             if strings:
