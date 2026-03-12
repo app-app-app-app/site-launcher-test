@@ -1626,7 +1626,7 @@ def generate_lang_files(
             strings,spans=_extract_strings(content)
         
             if strings:
-                outs=_llm_transform_strings_onepass(client,model,strings,target_lang)
+                outs=_llm_transform_strings_onepass(client,model,strings,target_lang,geo_code)
                 content=_apply_strings(content,spans,outs)
 
 
