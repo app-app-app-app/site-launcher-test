@@ -1452,6 +1452,8 @@ def generate_lang_files(
     total = max(1, len(domains))
 
     for idx, domain in enumerate(domains, start=1):
+        currency_code = geo_currency.strip().upper()
+        price = _make_price(currency_code)
         cc = _infer_cc_from_target_lang(target_lang, geo_code)
         content = template
 
