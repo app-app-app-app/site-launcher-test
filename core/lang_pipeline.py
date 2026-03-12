@@ -4,6 +4,7 @@ import re
 import json
 import random
 from typing import Dict, List, Optional, Callable, Tuple
+from core.options import geo
 
 
 # OpenAI (required)
@@ -1223,7 +1224,7 @@ def _llm_transform_strings_onepass(
         protected_list.append(ps)
         maps.append(mp)
 
-    country_name = geo_defaults[cc]["name"]
+    country_name = geo[cc]["name"]
     
     system = (
         "You are processing a list of website phrases. "
