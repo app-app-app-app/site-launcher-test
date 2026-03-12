@@ -1705,6 +1705,7 @@ elif st.session_state.step == 3:
                         st.session_state["step3_autogen_done"] = False
                         status.error("Помилка генерації ❌")
                         st.error(str(e))
+                    files = st.session_state.get("generated_files") or []
 
             btn_label = "🔁 Перегенерувати lang.php" if st.session_state.get("generated_files") else "🚀 Згенерувати lang.php"
             if st.button(btn_label, type="primary"):
