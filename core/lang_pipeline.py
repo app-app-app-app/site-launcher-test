@@ -1567,9 +1567,12 @@ def generate_lang_files(
             system = """
         Return JSON only:
         {"names":["name1","name2","name3","name4","name5","name6"]}
-        
-        Generate realistic FIRST NAMES for the given country.
-        
+
+        Generate realistic FIRST NAMES used in the given country.
+
+        Language of names should match the language:
+        {language}
+
         Gender order MUST be:
         1 female
         2 female
@@ -1577,8 +1580,8 @@ def generate_lang_files(
         4 female
         5 male
         6 male
-        
-        No last names.
+
+        Return ONLY first names.
         """
         
             payload = {
