@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+
+    <url>
+        <loc>https://{{DOMAIN}}/</loc>
+    </url>
+
+    <url>
+        <loc>https://{{DOMAIN}}/lander/{{DOMAIN}}/register.php</loc>
+    </url>
+
+    <url>
+        <loc>https://{{DOMAIN}}/lander/{{DOMAIN}}/private-policy.php</loc>
+    </url>
+
+    <url>
+        <loc>https://{{DOMAIN}}/lander/{{DOMAIN}}/faq.php</loc>
+    </url>
+
+    <url>
+        <loc>https://{{DOMAIN}}/lander/{{DOMAIN}}/contact.php</loc>
+    </url>
+
+    <url>
+        <loc>https://{{DOMAIN}}/lander/{{DOMAIN}}/conditions.php</loc>
+    </url>
+
+    <url>
+        <loc>https://{{DOMAIN}}/lander/{{DOMAIN}}/about.php</loc>
+    </url>
+</urlset>
+
