@@ -192,26 +192,33 @@ $home_title = "EMPIECE CON <span style=\"text-transform: uppercase\">$source</sp
 
 // conditions page
 $terms_title = "TÉRMINOS DE USO";
-$terms_paragraphs = [
-    "Estas condiciones regulan el uso de la plataforma y son vinculantes para todos los usuarios registrados. Al registrarse o usarla, usted acepta estas condiciones. El uso está reservado exclusivamente a personas mayores de edad y con capacidad jurídica.",
-    "La plataforma puede estar temporalmente limitada por mantenimiento técnico o circunstancias externas. Las funciones, contenidos u ofertas pueden ajustarse o desarrollarse.",
-    "Todos los contenidos, tecnologías y análisis proporcionados están protegidos por la ley. No se permite su uso fuera de la plataforma sin autorización.",
-    "Los usuarios deben facilitar datos correctos y actualizados. Las decisiones de inversión y de trading son responsabilidad propia. No se trata de asesoramiento financiero ni de una garantía de resultados concretos. Los mercados financieros conllevan riesgos, incluida la posible pérdida de capital.",
-    "Los datos personales se tratan de acuerdo con la normativa vigente de protección de datos. Se aplican estándares adecuados de seguridad y cumplimiento.",
-    "Nos reservamos el derecho a modificar los términos de uso. El uso continuado de la plataforma se considerará aceptación de las normas actualizadas."
-];
+$terms_1 = "Estas condiciones regulan el uso de la plataforma y son vinculantes para todos los usuarios registrados. Al registrarse o usarla, usted acepta estas condiciones. El uso está reservado exclusivamente a personas mayores de edad y con capacidad jurídica.";
+
+$terms_2 = "La plataforma puede estar temporalmente limitada por mantenimiento técnico o circunstancias externas. Las funciones, contenidos u ofertas pueden ajustarse o desarrollarse.";
+
+$terms_3 = "Todos los contenidos, tecnologías y análisis proporcionados están protegidos por la ley. No se permite su uso fuera de la plataforma sin autorización.";
+
+$terms_4 = "Los usuarios deben facilitar datos correctos y actualizados. Las decisiones de inversión y de trading son responsabilidad propia. No se trata de asesoramiento financiero ni de una garantía de resultados concretos. Los mercados financieros conllevan riesgos, incluida la posible pérdida de capital.";
+
+$terms_5 = "Los datos personales se tratan de acuerdo con la normativa vigente de protección de datos. Se aplican estándares adecuados de seguridad y cumplimiento.";
+
+$terms_6 = "Nos reservamos el derecho a modificar los términos de uso. El uso continuado de la plataforma se considerará aceptación de las normas actualizadas.";
 
 
 // private page
 $privacy_title = "POLÍTICA DE PRIVACIDAD";
 
-$privacy_paragraphs = [
-    "La protección de sus datos personales es para nosotros una prioridad absoluta. Tratamos sus datos exclusivamente conforme a la normativa de protección de datos vigente, en particular la RGPD.",
-    "Solo recogemos la información necesaria para prestar nuestros servicios —como datos de contacto, cuenta, transacciones y uso técnico. En ciertos casos, una verificación de identidad puede ser legalmente obligatoria.",
-    "El tratamiento de datos se realiza para la gestión de cuentas, la ejecución de transacciones, la atención al cliente, la seguridad, la prevención del fraude y el cumplimiento de obligaciones legales. Recibirá información de marketing solo con su consentimiento expreso.",
-    "La comunicación de datos se realiza exclusivamente a proveedores cuidadosamente seleccionados (p. ej., proveedores de pagos o de TI) y solo en la medida necesaria. No se venden sus datos.",
-    "Empleamos medidas técnicas y organizativas de seguridad adecuadas. Los datos se conservan solo durante el tiempo exigido por la ley o mientras sea necesario para el propósito correspondiente.",
-    "Usted tiene en cualquier momento el derecho a acceder, rectificar, borrar o limitar el tratamiento de sus datos, así como a retirar consentimientos otorgados.",
-    "Puede encontrar más información y las formas de contacto en nuestra web."
-];
+$privacy_1 = "La protección de sus datos personales es para nosotros una prioridad absoluta. Tratamos sus datos exclusivamente conforme a la normativa de protección de datos vigente, en particular la RGPD.";
+
+$privacy_2 = "Solo recogemos la información necesaria para prestar nuestros servicios —como datos de contacto, cuenta, transacciones y uso técnico. En ciertos casos, una verificación de identidad puede ser legalmente obligatoria.";
+
+$privacy_3 = "El tratamiento de datos se realiza para la gestión de cuentas, la ejecución de transacciones, la atención al cliente, la seguridad, la prevención del fraude y el cumplimiento de obligaciones legales. Recibirá información de marketing solo con su consentimiento expreso.";
+
+$privacy_4 = "La comunicación de datos se realiza exclusivamente a proveedores cuidadosamente seleccionados (p. ej., proveedores de pagos o de TI) y solo en la medida necesaria. No se venden sus datos.";
+
+$privacy_5 = "Empleamos medidas técnicas y organizativas de seguridad adecuadas. Los datos se conservan solo durante el tiempo exigido por la ley o mientras sea necesario para el propósito correspondiente.";
+
+$privacy_6 = "Usted tiene en cualquier momento el derecho a acceder, rectificar, borrar o limitar el tratamiento de sus datos, así como a retirar consentimientos otorgados.";
+
+$privacy_7 = "Puede encontrar más información y las formas de contacto en nuestra web.";
 ?>
