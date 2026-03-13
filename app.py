@@ -1691,6 +1691,7 @@ elif st.session_state.step == 3:
                             brand=brand,
                             model=MODEL,
                             progress_cb=progress_cb,
+                            geo_defaults=geo,
                         )
 
                         duration = round(time.time() - start_time, 2)
@@ -1729,6 +1730,7 @@ elif st.session_state.step == 3:
                             brand=brand,
                             model=MODEL,
                             progress_cb=progress_cb,
+                            geo_defaults=geo,
                         )
 
                         duration = round(time.time() - start_time, 2)
