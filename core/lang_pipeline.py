@@ -1489,6 +1489,7 @@ def generate_lang_files(
     """
     client = _get_openai_client()
     template = template_bytes.decode("utf-8", errors="replace")
+    content = template
     if country_name:
         content = _set_php_var(content, "country_name", country_name, False)
     template_kind = (template_kind or "template_1").strip().lower()
@@ -1571,8 +1572,8 @@ def generate_lang_files(
             content = _set_php_var(content,"rating_count",str(rating_count),numeric=True)
             content = _set_php_var(content,"site_lang",target_lang,numeric=False)
             content = _set_php_var(content,"site_gmail",_gmail_for_domain(domain),numeric=False)
-            country_name = geo.get(geo_code, {}).get("ua_name") or geo_code
-            content = _set_php_var(content, "country_name", country_name, False)
+            if country_name:
+                content = _set_php_var(content, "country_name", country_name, False)
             
         
             # crypto image
