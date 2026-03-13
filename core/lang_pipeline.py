@@ -1566,6 +1566,8 @@ def generate_lang_files(
             content = _set_php_var(content,"rating_count",str(rating_count),numeric=True)
             content = _set_php_var(content,"site_lang",target_lang,numeric=False)
             content = _set_php_var(content,"site_gmail",_gmail_for_domain(domain),numeric=False)
+            country_name = geo_defaults.get(geo_code, {}).get("ua_name") or geo_code
+            content = _set_php_var(content, "country_name", country_name, False)
         
             # crypto image
             img = f"images/{CRYPTO_IMAGES.get(cc,'crypto_main.png')}"
