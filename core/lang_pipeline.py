@@ -796,6 +796,7 @@ def _generate_specials_via_llm(
 
     title = _ensure_title_shape(title, target_lang)
     desc = _ensure_desc_shape(desc, target_lang)
+    desc = re.sub(r"\$source([⭐⚡🔥🚀✅💰➡️])", r"$source \1", desc)
 
     if not isinstance(personas, list):
         personas = []
@@ -937,6 +938,7 @@ def _generate_specials_via_llm(
     desc = _ensure_4_emojis_spread(desc)
     desc = _kill_comma_checklist(desc)
     desc = re.sub(r"\s*([.!?])\s*", r"\1 ", desc).strip()  # акуратна пунктуація
+    
 
     
     # --- нормалізація personas ---
@@ -1566,7 +1568,7 @@ def generate_lang_files(
             content = _set_php_var(content,"rating_count",str(rating_count),numeric=True)
             content = _set_php_var(content,"site_lang",target_lang,numeric=False)
             content = _set_php_var(content,"site_gmail",_gmail_for_domain(domain),numeric=False)
-            country_name = geo_code
+            country_name = geo.get(geo_code, {}).get("ua_name") or geo_code
             content = _set_php_var(content, "country_name", country_name, False)
             
         
