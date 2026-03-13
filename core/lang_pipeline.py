@@ -1480,7 +1480,7 @@ def generate_lang_files(
     brand: str,
     template_kind: str = "template_1",
     model: str = DEFAULT_MODEL,
-    country_name: Optional[str] = None
+    country_name: Optional[str] = None,
     progress_cb: Optional[Callable[[float, str], None]] = None,
 ) -> List[Dict[str, str]]:
     """
