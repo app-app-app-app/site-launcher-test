@@ -45,6 +45,10 @@ const disposableEmailDomains = [
     'tf-info.com',
     'btinternet.com',
     'ourtimesupport.com',
+    'approject.net',
+    'banlamail.com',
+    'dpvmx.com',
+    'mrotzis.com',
 ];
 
 function getLanguageByGeo(geo) {
