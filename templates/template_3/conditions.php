@@ -260,15 +260,35 @@ include 'lang.php';
               }
             </style>
 
-<section class="welcome">
-<h1><?= $terms_title ?></h1>
+<section class="welcome" aria-labelledby="terms-title">
 
-<p class="leaders__description"><?= $terms_1 ?></p>
-<p class="leaders__description"><?= $terms_2 ?></p>
-<p class="leaders__description"><?= $terms_3 ?></p>
-<p class="leaders__description"><?= $terms_4 ?></p>
-<p class="leaders__description"><?= $terms_5 ?></p>
-<p class="leaders__description"><?= $terms_6 ?></p>
+    <h1 id="terms-title" style="text-align: center;">
+        <?= $terms_title ?>
+    </h1>
+
+    <p style="text-align: center; max-width: 1000px; margin: 20px auto 0 auto;" class="leaders__description">
+        <?= $terms_1 ?>
+    </p>
+
+    <p style="text-align: center; max-width: 1000px; margin: 20px auto 0 auto;" class="leaders__description">
+        <?= $terms_2 ?>
+    </p>
+
+    <p style="text-align: center; max-width: 1000px; margin: 20px auto 0 auto;" class="leaders__description">
+        <?= $terms_3 ?>
+    </p>
+
+    <p style="text-align: center; max-width: 1000px; margin: 20px auto 0 auto;" class="leaders__description">
+        <?= $terms_4 ?>
+    </p>
+
+    <p style="text-align: center; max-width: 1000px; margin: 20px auto 0 auto;" class="leaders__description">
+        <?= $terms_5 ?>
+    </p>
+
+    <p style="text-align: center; max-width: 1000px; margin: 20px auto 0 auto;" class="leaders__description">
+        <?= $terms_6 ?>
+    </p>
 
 </section>
 
