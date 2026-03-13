@@ -12,7 +12,7 @@ $site_lang = "it-IT";
 $crypto_img = "images/crypto_main.png";
 
 $main_h1 = "Profitto giornaliero da <span>745€</span> a <span>1860€</span> grazie alla piattaforma di investimento intelligente";
-$main_p = "Solo per un periodo limitato: registrati in <span>Italia</span> ora";
+$main_p = "Solo per un periodo limitato: registrati in <span>$country_name</span> ora";
 
 // имена с отзывов
 $feedback_strong_1 = "Giulia Martellini";
