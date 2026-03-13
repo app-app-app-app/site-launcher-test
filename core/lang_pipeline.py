@@ -1766,12 +1766,12 @@ def generate_lang_files_multi(
 
     out: List[Dict[str, str]] = []
 
-    # визначаємо назву країни з geo_defaults
-    country_name = geo_code
-    if geo_defaults and geo_code in geo_defaults:
+    # ---- визначаємо назву країни ----
+    country_name = geo_code or ""
+    if geo_defaults and geo_code and geo_code in geo_defaults:
         country_name = geo_defaults[geo_code].get("name", geo_code)
 
-    # preserve order
+    # ---- генерація для кожного домену ----
     for d in domains:
 
         kind = (domain_templates or {}).get(d, "template_1")
@@ -1797,8 +1797,8 @@ def generate_lang_files_multi(
             brand=brand,
             template_kind=tk,
             model=model,
+            country_name=country_name,
             progress_cb=progress_cb,
-            country_name=country_name,   # ← передаємо назву країни
         )
 
         if files:
