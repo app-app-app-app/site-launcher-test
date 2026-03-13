@@ -1480,6 +1480,7 @@ def generate_lang_files(
     brand: str,
     template_kind: str = "template_1",
     model: str = DEFAULT_MODEL,
+    country_name: Optional[str] = None
     progress_cb: Optional[Callable[[float, str], None]] = None,
 ) -> List[Dict[str, str]]:
     """
@@ -1488,6 +1489,8 @@ def generate_lang_files(
     """
     client = _get_openai_client()
     template = template_bytes.decode("utf-8", errors="replace")
+    if country_name:
+        content = _set_php_var(content, "country_name", country_name, False)
     template_kind = (template_kind or "template_1").strip().lower()
 
     out_files: List[Dict[str, str]] = []
@@ -1752,22 +1755,35 @@ def generate_lang_files_multi(
     domain_templates: Dict[str, str],
     brand: str,
     model: str = DEFAULT_MODEL,
+    geo_defaults: Optional[Dict] = None,
+    geo_defaults=geo,
     progress_cb: Optional[Callable[[float, str], None]] = None,
 ) -> List[Dict[str, str]]:
     """
     Generate lang.php for multiple templates.
-    domain_templates maps domain -> "template_1" or "template_2"
+    domain_templates maps domain -> template id
     """
+
     out: List[Dict[str, str]] = []
+
+    # визначаємо назву країни з geo_defaults
+    country_name = geo_code
+    if geo_defaults and geo_code in geo_defaults:
+        country_name = geo_defaults[geo_code].get("name", geo_code)
+
     # preserve order
     for d in domains:
+
         kind = (domain_templates or {}).get(d, "template_1")
-        if kind in ("template_3","t3","3","template3"):
+
+        if kind in ("template_3", "t3", "3", "template3"):
             tpl = template3_bytes
             tk = "template_3"
-        elif kind in ("template_2","t2","2","template2"):
+
+        elif kind in ("template_2", "t2", "2", "template2"):
             tpl = template2_bytes
             tk = "template_2"
+
         else:
             tpl = template1_bytes
             tk = "template_1"
@@ -1782,7 +1798,10 @@ def generate_lang_files_multi(
             template_kind=tk,
             model=model,
             progress_cb=progress_cb,
+            country_name=country_name,   # ← передаємо назву країни
         )
+
         if files:
             out.append(files[0])
+
     return out
