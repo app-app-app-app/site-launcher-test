@@ -260,49 +260,76 @@ include 'lang.php';
               }
             </style>
 
-<section class="welcome" aria-labelledby="welcome-title">
+<section class="welcome" aria-labelledby="privacy-title">
     <h1 id="privacy-title" style="text-align: center;">
         <?= $privacy_title ?>
     </h1>
 
-    <?php foreach ($privacy_paragraphs as $paragraph): ?>
-        <p style="text-align: center; max-width: 1000px; margin: 20px auto 0 auto;" class="leaders__description">
-            <?= $paragraph ?>
-        </p>
-    <?php endforeach; ?>
+    <p style="text-align: center; max-width: 1000px; margin: 20px auto 0 auto;" class="leaders__description">
+        <?= $privacy_1 ?>
+    </p>
+
+    <p style="text-align: center; max-width: 1000px; margin: 20px auto 0 auto;" class="leaders__description">
+        <?= $privacy_2 ?>
+    </p>
+
+    <p style="text-align: center; max-width: 1000px; margin: 20px auto 0 auto;" class="leaders__description">
+        <?= $privacy_3 ?>
+    </p>
+
+    <p style="text-align: center; max-width: 1000px; margin: 20px auto 0 auto;" class="leaders__description">
+        <?= $privacy_4 ?>
+    </p>
+
+    <p style="text-align: center; max-width: 1000px; margin: 20px auto 0 auto;" class="leaders__description">
+        <?= $privacy_5 ?>
+    </p>
+
+    <p style="text-align: center; max-width: 1000px; margin: 20px auto 0 auto;" class="leaders__description">
+        <?= $privacy_6 ?>
+    </p>
+
+    <p style="text-align: center; max-width: 1000px; margin: 20px auto 0 auto;" class="leaders__description">
+        <?= $privacy_7 ?>
+    </p>
+
 
     <div class="form" style="margin: 0 auto; margin-top: 40px; margin-bottom: 80px">
-      <form class="leadform rf-form js-rf-form" id="form" method="post" style="padding: 20px;" action="./integration/send.php">
-        <input type="hidden" name="js_token" value="<?= $jsToken; ?>">
+        <form class="leadform rf-form js-rf-form" id="form" method="post" style="padding: 20px;" action="./integration/send.php">
 
-        <div style="position:absolute; left:-9999px; opacity:0; height:0; overflow:hidden;">
-          <input type="text" name="website" tabindex="-1" autocomplete="off">
-          <input type="text" name="company" style="position:absolute; left:-9999px;">
-        </div>
+            <input type="hidden" name="js_token" value="<?= $jsToken; ?>">
 
+            <div style="position:absolute; left:-9999px; opacity:0; height:0; overflow:hidden;">
+                <input type="text" name="website" tabindex="-1" autocomplete="off">
+                <input type="text" name="company" style="position:absolute; left:-9999px;">
+            </div>
 
-        <input type="hidden" name="country" value="<?= $form_country; ?>">
-        <input type="hidden" name="language" value="<?= $form_language; ?>">
-        <input type="hidden" name="phone_country" value="<?= $form_phone_country; ?>">
-        <input type="hidden" name="only_countries" value='<?= $form_only_countries; ?>'>
+            <input type="hidden" name="country" value="<?= $form_country; ?>">
+            <input type="hidden" name="language" value="<?= $form_language; ?>">
+            <input type="hidden" name="phone_country" value="<?= $form_phone_country; ?>">
+            <input type="hidden" name="only_countries" value='<?= $form_only_countries; ?>'>
 
+            <div class="form-preloader hidden">
+                <svg width="50" height="50" class="spinner" viewBox="0 0 50 50">
+                    <circle class="path" cx="25" cy="25" r="20" fill="none" stroke-width="5"></circle>
+                </svg>
+            </div>
 
-        <div class="form-preloader hidden">
-          <svg width="50" height="50" class="spinner" viewBox="0 0 50 50">
-              <circle class="path" cx="25" cy="25" r="20" fill="none"   stroke-width="5"></circle>
-          </svg>
-        </div>
+            <input type="text" placeholder="<?= $contact_form_fname ?>" name="fname" required="">
+            <input type="text" placeholder="<?= $contact_form_lname ?>" name="lname" required="">
+            <input type="email" placeholder="<?= $contact_form_email ?>" name="email" required="">
+            <input type="tel" name="fullphone" required="">
 
-        <input type="text" placeholder="<?= $contact_form_fname ?>" name="fname" required="">
-        <input type="text" placeholder="<?= $contact_form_lname ?>" name="lname" required="">
-        <input type="email" placeholder="<?= $contact_form_email ?>" name="email" required="">
-        <input type="tel" name="fullphone" required="">
-        <span class="error-msg hide"></span>
-        <button type="submit" class="submit" style="width: 100%"><?= $contact_form_submit ?></button>
-      </form>
+            <span class="error-msg hide"></span>
+
+            <button type="submit" class="submit" style="width: 100%">
+                <?= $contact_form_submit ?>
+            </button>
+
+        </form>
     </div>
-</section>
 
+</section>
 
 <footer class="footer container">
   <div class="footer__main">
