@@ -1757,7 +1757,6 @@ def generate_lang_files_multi(
     brand: str,
     model: str = DEFAULT_MODEL,
     geo_defaults: Optional[Dict] = None,
-    geo_defaults=geo,
     progress_cb: Optional[Callable[[float, str], None]] = None,
 ) -> List[Dict[str, str]]:
     """
