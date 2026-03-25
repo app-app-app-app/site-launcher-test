@@ -360,7 +360,7 @@ def keitaro_create_offer(domain):
         "url": f"https://{domain}"
     }
 
-    r = requests.post(url, json=data, headers=headers)
+    r = requests.post(url, json=data, headers=headers, verify=False)
 
     return r.json()
 
@@ -386,7 +386,7 @@ def keitaro_create_campaign(domain, offer_id):
         ]
     }
 
-    r = requests.post(url, json=data, headers=headers)
+    r = requests.post(url, json=data, headers=headers, verify=False)
 
     return r.json()
 
