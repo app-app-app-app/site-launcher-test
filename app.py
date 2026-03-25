@@ -384,7 +384,7 @@ def keitaro_create_campaign(domain):
     data = {
         "name": domain,
         "alias": alias,
-        "group_id": 3,
+        "group_id": 2,
         "state": "active"
     }
 
@@ -400,7 +400,7 @@ def keitaro_create_campaign(domain):
 
 
 def keitaro_add_flow(campaign_id, offer_id):
-    url = f"{st.secrets['KEITARO_URL']}/admin_api/v1/campaigns/{campaign_id}/streams"
+    url = f"{st.secrets['KEITARO_URL']}/admin_api/v1/campaigns/{campaign_id}/flows"
 
     headers = {
         "Api-Key": st.secrets["KEITARO_API_KEY"],
