@@ -1573,14 +1573,15 @@ elif st.session_state.step == 2:
             use_container_width=True,
             on_click=step2_continue,
         )
-        if st.button("🚀 FULL LAUNCH", use_container_width=True):
+        if st.button("🚀 TEST SHEETS", use_container_width=True):
         
-            if len(st.session_state.chosen_domains) != int(st.session_state.sites_count):
-                st.error("❌ Обери всі домени")
+            st.write("🚀 DEBUG: кнопка натиснута")
+        
+            if len(st.session_state.chosen_domains) == 0:
+                st.error("❌ Нема доменів")
             else:
-                st.success("🚀 Запускаю повний процес...")
+                st.write("DEBUG: викликаю add_to_google_sheet")
         
-                # 🔥 1. СПОЧАТКУ запис в таблицю
                 add_to_google_sheet(
                     brand=st.session_state.get("brand"),
                     geo_code=st.session_state.get("geo_code"),
@@ -1588,10 +1589,7 @@ elif st.session_state.step == 2:
                     domains=st.session_state.get("chosen_domains")
                 )
         
-                st.success("📊 Додано в таблицю")
-        
-                # 🔥 2. ПОТІМ перехід (rerun буде тут)
-                step2_continue()
+                st.success("✅ TEST DONE")
         
 
 
