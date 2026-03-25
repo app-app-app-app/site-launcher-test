@@ -359,13 +359,16 @@ def keitaro_create_offer(domain):
     data = {
         "name": domain,
         "group_id": 3,
+        "offer_type": "simple",
         "url": f"https://{domain}"
     }
 
     r = requests.post(url, json=data, headers=headers, verify=False)
 
-    return r.json()
-
+    try:
+        return r.json()
+    except:
+        return {"error": r.text}
 
 def keitaro_create_campaign(domain, offer_id):
     url = f"{st.secrets['KEITARO_URL']}/admin_api/v1/campaigns"
@@ -382,7 +385,7 @@ def keitaro_create_campaign(domain, offer_id):
         "state": "active",
         "streams": [
             {
-                "schema": "default",
+                "name": "Default",
                 "offer_id": offer_id
             }
         ]
@@ -390,8 +393,10 @@ def keitaro_create_campaign(domain, offer_id):
 
     r = requests.post(url, json=data, headers=headers, verify=False)
 
-    return r.json()
-
+    try:
+        return r.json()
+    except:
+        return {"error": r.text}
 
 
 TEXT_EXTS = {".txt", ".xml", ".html", ".htm", ".php", ".css", ".js", ".json", ".md"}
@@ -1670,17 +1675,20 @@ elif st.session_state.step == 2:
                 for d in domains:
                 
                     offer = keitaro_create_offer(d)
+                    st.write("📩 OFFER RESPONSE:", offer)
+
                     offer_id = offer.get("id")
                 
                     if offer_id:
-                        keitaro_create_campaign(d, offer_id)
+                        campaign = keitaro_create_campaign(d, offer_id)
+                        st.write("📩 CAMPAIGN RESPONSE:", campaign)
                         st.write(f"✅ {d} — кампанія створена")
                     else:
                         st.write(f"❌ {d} — не створився offer")
                 
                 # 3. генерація (в КІНЦІ!)
                 st.write("⚙️ Генерація сайтів...")
-                step2_continue()
+                # step2_continue()
         
                 st.success("🔥 FULL LAUNCH DONE")
 
