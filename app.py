@@ -379,25 +379,55 @@ def keitaro_create_campaign(domain, offer_id):
         "Content-Type": "application/json"
     }
 
+    alias = domain.replace(".", "-")
+
     data = {
         "name": domain,
+        "alias": alias,
         "group_id": 3,
-        "type": "campaign",
         "state": "active",
         "streams": [
             {
                 "name": "Default",
-                "offer_id": offer_id
+                "offer_id": offer_id,
+                "schema": "default"
             }
         ]
     }
 
     r = requests.post(url, json=data, headers=headers, verify=False)
 
+    st.write("CAMPAIGN STATUS:", r.status_code)
+    st.write("CAMPAIGN RESPONSE:", r.text)
+
     try:
         return r.json()
     except:
         return {"error": r.text}
+
+
+def keitaro_upload_zip(offer_id, zip_path):
+    url = f"{st.secrets['KEITARO_URL']}/admin_api/v1/offers/{offer_id}/files"
+
+    headers = {
+        "Api-Key": st.secrets["KEITARO_API_KEY"]
+    }
+
+    files = {
+        "file": open(zip_path, "rb")
+    }
+
+    data = {
+        "folder": "/lander/"
+    }
+
+    r = requests.post(url, headers=headers, files=files, data=data, verify=False)
+
+    st.write("ZIP STATUS:", r.status_code)
+    st.write("ZIP RESPONSE:", r.text)
+
+    return r.text
+
 
 
 TEXT_EXTS = {".txt", ".xml", ".html", ".htm", ".php", ".css", ".js", ".json", ".md"}
@@ -1676,6 +1706,13 @@ elif st.session_state.step == 2:
                 for d in domains:
                 
                     offer = keitaro_create_offer(d)
+                    offer_id = offer.get("id")
+
+                    if offer_id:
+                        zip_path = f"{d}.zip"  # або звідки ти береш
+
+                        keitaro_upload_zip(offer_id, zip_path)
+    
                     st.write("📩 OFFER RESPONSE:", offer)
 
                     offer_id = offer.get("id")
