@@ -358,9 +358,7 @@ def keitaro_create_offer(domain):
 
     data = {
         "name": domain,
-        "group_id": 3,
-        "offer_url": f"https://{domain}",
-        "status": "active"
+        "group_id": 3
     }
 
     r = requests.post(url, json=data, headers=headers, verify=False)
