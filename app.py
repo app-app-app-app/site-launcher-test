@@ -281,7 +281,12 @@ def add_to_google_sheet(brand, geo_code, lang_code, domains):
         import json
         import datetime
 
-        creds_dict = json.loads(st.secrets["gcp"]["credentials"].replace('\n', '\\n'))
+        raw = st.secrets["gcp"]["credentials"]
+
+        if isinstance(raw, dict):
+            creds_dict = raw
+        else:
+            creds_dict = json.loads(raw.replace('\n', '\\n'))
 
         creds = Credentials.from_service_account_info(
             creds_dict,
