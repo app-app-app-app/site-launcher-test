@@ -1,0 +1,68 @@
+.iti.iti--allow-dropdown {
+    width: 100%;
+}
+.leadform {
+  position: relative;
+}
+.form-preloader {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  right: 0;
+  left: 0;
+  background: #fff;
+  z-index: 4;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+@media (max-width: 444px) {
+  .iti.iti--allow-dropdown {
+    width: auto !important;
+  }
+}
+.error-msg {
+  padding-bottom: 10px;
+  color: red;
+  font-size: 14px;
+  text-align: right;
+}
+.spinner {
+  animation: rotate 2s linear infinite;
+  z-index: 2;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  margin: -25px 0 0 -25px;
+  width: 50px;
+  height: 50px;
+}
+.spinner .path {
+  stroke: #0077db;
+  stroke-linecap: round;
+  animation: dash 1.5s ease-in-out infinite;
+}
+.hide,
+.hidden {
+  display: none !important;
+}
+@keyframes rotate {
+  100% {
+    transform: rotate(360deg);
+  }
+}
+@keyframes dash {
+  0% {
+    stroke-dasharray: 1, 150;
+    stroke-dashoffset: 0;
+  }
+  50% {
+    stroke-dasharray: 90, 150;
+    stroke-dashoffset: -35;
+  }
+  100% {
+    stroke-dasharray: 90, 150;
+    stroke-dashoffset: -124;
+  }
+}
