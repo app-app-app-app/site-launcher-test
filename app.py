@@ -280,13 +280,18 @@ def add_to_google_sheet(brand, geo_code, lang_code, domains):
     try:
         import json
         import datetime
+        from google.oauth2.service_account import Credentials
+        from googleapiclient.discovery import build
 
+        # 🔥 1. читаємо credentials (СТАБІЛЬНО)
         raw = st.secrets["gcp"]["credentials"]
 
-        if isinstance(raw, dict):
-            creds_dict = raw
-        else:
-            creds_dict = json.loads(raw.replace('\n', '\\n'))
+        creds_dict = json.loads(
+            raw
+            .replace('\n', '')
+            .replace('-----BEGIN PRIVATE KEY-----', '-----BEGIN PRIVATE KEY-----\\n')
+            .replace('-----END PRIVATE KEY-----', '\\n-----END PRIVATE KEY-----\\n')
+        )
 
         creds = Credentials.from_service_account_info(
             creds_dict,
@@ -298,22 +303,21 @@ def add_to_google_sheet(brand, geo_code, lang_code, domains):
         spreadsheet_id = "1sPHHOXXAtVjtDxWNSB6G1OtLa-hmqNSCYScnduAUY8o"
         sheet_name = "Запуски"
 
-        # 🔥 1. беремо колонку C (Бренд)
+        # 🔥 2. знайти перший вільний рядок по колонці C
         result = service.spreadsheets().values().get(
             spreadsheetId=spreadsheet_id,
             range=f"{sheet_name}!C:C",
         ).execute()
 
         values = result.get("values", [])
-
-        # 🔥 2. шукаємо перший пустий рядок
         next_row = len(values) + 1
 
-        # 🔥 3. готуємо дані
+        # 🔥 3. підготовка даних
         today = datetime.datetime.now().strftime("%d.%m")
 
         geo_name = _geo_name_ua(geo_code)
         lang_name = _lang_name_ua(lang_code)
+
         review_flag = "Так" if st.session_state.get("generate_review") else "Ні"
 
         domain_templates = st.session_state.get("domain_templates", {})
@@ -334,7 +338,7 @@ def add_to_google_sheet(brand, geo_code, lang_code, domains):
                 review_flag,  # H
             ])
 
-        # 🔥 4. записуємо з колонки B
+        # 🔥 4. запис в таблицю з колонки B
         service.spreadsheets().values().update(
             spreadsheetId=spreadsheet_id,
             range=f"{sheet_name}!B{next_row}",
