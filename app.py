@@ -277,68 +277,69 @@ init_state()
 # ---------------------------
 
 def add_to_google_sheet(brand, geo_code, lang_code, domains):
-    st.write("DEBUG: запускаю Google Sheets запис")
+    import json
+    import datetime
+
+    st.write("🚀 DEBUG: старт Google Sheets")
+
     try:
-        import json
+        st.write("Secrets keys:", st.secrets.keys())
 
         if "gcp" not in st.secrets:
-            st.warning("⚠️ Немає GCP secrets — пропускаю запис в таблицю")
+            st.error("❌ Немає gcp в secrets")
             return
 
-        creds_dict = json.loads(st.secrets["gcp"]["credentials"])
+        raw = st.secrets["gcp"]["credentials"]
+
+        st.write("DEBUG: creds length:", len(raw))
+
+        creds_dict = json.loads(raw)
+
+        st.write("DEBUG: JSON parsed OK")
 
         creds = Credentials.from_service_account_info(
             creds_dict,
             scopes=["https://www.googleapis.com/auth/spreadsheets"]
         )
 
+        st.write("DEBUG: creds created")
+
         service = build("sheets", "v4", credentials=creds)
+
+        st.write("DEBUG: service built")
 
         spreadsheet_id = "1sPHHOXXAtVjtDxWNSB6G1OtLa-hmqNSCYScnduAUY8o"
         sheet_name = "Запуски"
 
         today = datetime.datetime.now().strftime("%d.%m")
 
-        geo_name = _geo_name_ua(geo_code)
-        lang_name = _lang_name_ua(lang_code)
+        values = [[
+            "",
+            today,
+            brand,
+            geo_code,
+            lang_code,
+            domains[0] if domains else "",
+            "Шаблон",
+            "Ні",
+            "",
+            "План"
+        ]]
 
-        review_flag = "Так" if st.session_state.get("generate_review") else "Ні"
-
-        domain_templates = st.session_state.get("domain_templates", {})
-
-        rows = []
-
-        for d in domains:
-            tpl_id = domain_templates.get(d, "template_1")
-            tpl_label = TEMPLATES.get(tpl_id, {}).get("label", tpl_id)
-
-            rows.append([
-                "",                 # № (пусто)
-                today,              # Дата
-                brand,              # Бренд
-                geo_name,           # Гео
-                lang_name,          # Мова
-                d,                  # Домен
-                tpl_label,          # Шаблон
-                review_flag,        # Ревʼю
-                "", "",             # де знайдений / статус
-                "План",             # статус
-                "", "", "", ""      # інші поля
-            ])
+        st.write("DEBUG: sending to sheets...")
 
         service.spreadsheets().values().append(
             spreadsheetId=spreadsheet_id,
             range=f"{sheet_name}!A1",
             valueInputOption="USER_ENTERED",
-            body={"values": rows},
+            body={"values": values},
         ).execute()
 
-        st.success("✅ Додано в Google Sheets")
+        st.success("✅ SUCCESS — записалось!")
 
     except Exception as e:
-        st.error(f"❌ Google Sheets помилка: {e}")
+        st.error("❌ ERROR")
         st.write(str(e))
-
 
 TEXT_EXTS = {".txt", ".xml", ".html", ".htm", ".php", ".css", ".js", ".json", ".md"}
 
