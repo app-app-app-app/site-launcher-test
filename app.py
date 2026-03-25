@@ -16,6 +16,8 @@ from core.review_pipeline import generate_review
 import datetime
 from google.oauth2.service_account import Credentials
 from googleapiclient.discovery import build
+import urllib3
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 
 
