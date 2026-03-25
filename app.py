@@ -359,7 +359,6 @@ def keitaro_create_offer(domain):
     data = {
         "name": domain,
         "group_id": 3,
-        "offer_type": "simple",
         "url": f"https://{domain}"
     }
 
