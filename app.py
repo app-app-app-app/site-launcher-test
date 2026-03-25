@@ -371,7 +371,7 @@ def keitaro_create_offer(domain):
     except:
         return {"error": r.text}
 
-def keitaro_create_campaign(domain, offer_id):
+def keitaro_create_campaign(domain):
     url = f"{st.secrets['KEITARO_URL']}/admin_api/v1/campaigns"
 
     headers = {
@@ -385,14 +385,7 @@ def keitaro_create_campaign(domain, offer_id):
         "name": domain,
         "alias": alias,
         "group_id": 3,
-        "state": "active",
-        "streams": [
-            {
-                "name": "Default",
-                "offer_id": offer_id,
-                "schema": "default"
-            }
-        ]
+        "state": "active"
     }
 
     r = requests.post(url, json=data, headers=headers, verify=False)
@@ -405,6 +398,32 @@ def keitaro_create_campaign(domain, offer_id):
     except:
         return {"error": r.text}
 
+
+def keitaro_add_flow(campaign_id, offer_id):
+    url = f"{st.secrets['KEITARO_URL']}/admin_api/v1/campaigns/{campaign_id}/streams"
+
+    headers = {
+        "Api-Key": st.secrets["KEITARO_API_KEY"],
+        "Content-Type": "application/json"
+    }
+
+    data = {
+        "name": "Default",
+        "schema": "default",
+        "type": "regular",
+        "offers": [
+            {
+                "offer_id": offer_id
+            }
+        ]
+    }
+
+    r = requests.post(url, json=data, headers=headers, verify=False)
+
+    st.write("FLOW STATUS:", r.status_code)
+    st.write("FLOW RESPONSE:", r.text)
+
+    return r.text
 
 def keitaro_upload_zip(offer_id, zip_path):
     url = f"{st.secrets['KEITARO_URL']}/admin_api/v1/offers/{offer_id}/files"
@@ -1707,9 +1726,20 @@ elif st.session_state.step == 2:
                 
                     offer = keitaro_create_offer(d)
                     offer_id = offer.get("id")
-
+                    
                     if offer_id:
-                        zip_path = f"{d}.zip"  # або звідки ти береш
+                    
+                        campaign = keitaro_create_campaign(d)
+                        campaign_id = campaign.get("id")
+                    
+                        if campaign_id:
+                            keitaro_add_flow(campaign_id, offer_id)
+                            st.write(f"✅ {d} — повністю готово")
+                        else:
+                            st.write(f"❌ {d} — campaign не створилась")
+                    
+                    else:
+                        st.write(f"❌ {d} — offer не створився")
 
                         st.write("📦 ZIP upload skipped (debug режим)")
                         # keitaro_upload_zip(offer_id, zip_path)
