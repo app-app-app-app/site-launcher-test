@@ -277,6 +277,7 @@ init_state()
 # ---------------------------
 
 def add_to_google_sheet(brand, geo_code, lang_code, domains):
+    st.write("DEBUG: запускаю Google Sheets запис")
     try:
         import json
 
@@ -336,6 +337,7 @@ def add_to_google_sheet(brand, geo_code, lang_code, domains):
 
     except Exception as e:
         st.error(f"❌ Google Sheets помилка: {e}")
+        st.write(str(e))
 
 
 TEXT_EXTS = {".txt", ".xml", ".html", ".htm", ".php", ".css", ".js", ".json", ".md"}
