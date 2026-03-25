@@ -327,6 +327,8 @@ def add_to_google_sheet(brand, geo_code, lang_code, domains):
                 d,            # F
                 tpl_label,    # G
                 review_flag,  # H
+                "",                                 # I (пропускаємо)
+                "Автоматичне створення сайту",      # J 🔥
             ])
 
         # 🔥 запис
