@@ -2,6 +2,7 @@ import os
 import json
 import urllib.parse
 import streamlit as st
+import requests
 import textwrap
 import time
 import re
@@ -344,6 +345,52 @@ def add_to_google_sheet(brand, geo_code, lang_code, domains):
     except Exception as e:
         st.error("❌ Google Sheets ERROR")
         st.write(str(e))
+
+def keitaro_create_offer(domain):
+    url = f"{st.secrets['KEITARO_URL']}/admin_api/v1/offers"
+
+    headers = {
+        "Api-Key": st.secrets["KEITARO_API_KEY"],
+        "Content-Type": "application/json"
+    }
+
+    data = {
+        "name": domain,
+        "group_id": 3,
+        "url": f"https://{domain}"
+    }
+
+    r = requests.post(url, json=data, headers=headers)
+
+    return r.json()
+
+
+def keitaro_create_campaign(domain, offer_id):
+    url = f"{st.secrets['KEITARO_URL']}/admin_api/v1/campaigns"
+
+    headers = {
+        "Api-Key": st.secrets["KEITARO_API_KEY"],
+        "Content-Type": "application/json"
+    }
+
+    data = {
+        "name": domain,
+        "group_id": 3,
+        "type": "campaign",
+        "state": "active",
+        "streams": [
+            {
+                "schema": "default",
+                "offer_id": offer_id
+            }
+        ]
+    }
+
+    r = requests.post(url, json=data, headers=headers)
+
+    return r.json()
+
+
 
 TEXT_EXTS = {".txt", ".xml", ".html", ".htm", ".php", ".css", ".js", ".json", ".md"}
 
@@ -1595,6 +1642,45 @@ elif st.session_state.step == 2:
         
                 st.success("✅ TEST DONE")
         
+
+        if st.button("🚀 FULL LAUNCH", use_container_width=True):
+        
+            st.write("🚀 FULL LAUNCH старт")
+        
+            if len(st.session_state.chosen_domains) == 0:
+                st.error("❌ Нема доменів")
+            else:
+        
+                domains = st.session_state.get("chosen_domains")
+        
+                # 1. таблиця
+                st.write("📊 Запис в таблицю...")
+                add_to_google_sheet(
+                    brand=st.session_state.get("brand"),
+                    geo_code=st.session_state.get("geo_code"),
+                    lang_code=st.session_state.get("target_lang"),
+                    domains=domains
+                )
+        
+                # 2. генерація (твоя існуюча логіка Step 3)
+                st.write("⚙️ Генерація сайтів...")
+                step2_continue()  # поки залишаємо як є
+        
+                # 3. Keitaro
+                st.write("🎯 Keitaro...")
+        
+                for d in domains:
+        
+                    offer = keitaro_create_offer(d)
+                    offer_id = offer.get("id")
+        
+                    if offer_id:
+                        keitaro_create_campaign(d, offer_id)
+                        st.write(f"✅ {d} — кампанія створена")
+                    else:
+                        st.write(f"❌ {d} — не створився offer")
+        
+                st.success("🔥 FULL LAUNCH DONE")
 
 
     with right:
