@@ -409,11 +409,11 @@ def keitaro_add_flow(campaign_id, offer_id):
 
     data = {
         "name": "Default",
-        "schema": "default",
-        "type": "regular",
+        "type": "default",
+        "schema": "action",
         "offers": [
             {
-                "offer_id": offer_id
+                "id": offer_id
             }
         ]
     }
@@ -1749,7 +1749,7 @@ elif st.session_state.step == 2:
                     offer_id = offer.get("id")
                 
                     if offer_id:
-                        campaign = keitaro_create_campaign(d, offer_id)
+                        campaign = keitaro_create_campaign(d)
                         st.write("📩 CAMPAIGN RESPONSE:", campaign)
                         st.write(f"✅ {d} — кампанія створена")
                     else:
