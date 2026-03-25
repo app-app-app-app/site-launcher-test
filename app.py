@@ -1662,23 +1662,23 @@ elif st.session_state.step == 2:
                     domains=domains
                 )
         
-                # 2. генерація (твоя існуюча логіка Step 3)
-                st.write("⚙️ Генерація сайтів...")
-                step2_continue()  # поки залишаємо як є
-        
-                # 3. Keitaro
+                # 2. Keitaro (СПОЧАТКУ!)
                 st.write("🎯 Keitaro...")
-        
+                
                 for d in domains:
-        
+                
                     offer = keitaro_create_offer(d)
                     offer_id = offer.get("id")
-        
+                
                     if offer_id:
                         keitaro_create_campaign(d, offer_id)
                         st.write(f"✅ {d} — кампанія створена")
                     else:
                         st.write(f"❌ {d} — не створився offer")
+                
+                # 3. генерація (в КІНЦІ!)
+                st.write("⚙️ Генерація сайтів...")
+                step2_continue()
         
                 st.success("🔥 FULL LAUNCH DONE")
 
