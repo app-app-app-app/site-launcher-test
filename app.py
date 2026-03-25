@@ -1580,10 +1580,7 @@ elif st.session_state.step == 2:
             else:
                 st.success("🚀 Запускаю повний процес...")
         
-                # 1. Переходимо на step 3
-                step2_continue()
-        
-                # 2. Запис в таблицю
+                # 🔥 1. СПОЧАТКУ запис в таблицю
                 add_to_google_sheet(
                     brand=st.session_state.get("brand"),
                     geo_code=st.session_state.get("geo_code"),
@@ -1591,7 +1588,10 @@ elif st.session_state.step == 2:
                     domains=st.session_state.get("chosen_domains")
                 )
         
-                st.success("🔥 FULL LAUNCH DONE")        
+                st.success("📊 Додано в таблицю")
+        
+                # 🔥 2. ПОТІМ перехід (rerun буде тут)
+                step2_continue()
         
 
 
