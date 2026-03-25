@@ -1711,7 +1711,8 @@ elif st.session_state.step == 2:
                     if offer_id:
                         zip_path = f"{d}.zip"  # або звідки ти береш
 
-                        keitaro_upload_zip(offer_id, zip_path)
+                        st.write("📦 ZIP upload skipped (debug режим)")
+                        # keitaro_upload_zip(offer_id, zip_path)
     
                     st.write("📩 OFFER RESPONSE:", offer)
 
