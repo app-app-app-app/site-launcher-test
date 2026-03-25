@@ -277,68 +277,70 @@ init_state()
 # ---------------------------
 
 def add_to_google_sheet(brand, geo_code, lang_code, domains):
-    import json
-    import datetime
-
-    st.write("🚀 DEBUG: старт Google Sheets")
-
     try:
-        st.write("Secrets keys:", st.secrets.keys())
+        import json
+        import datetime
 
-        if "gcp" not in st.secrets:
-            st.error("❌ Немає gcp в secrets")
-            return
-
-        raw = st.secrets["gcp"]["credentials"]
-
-        st.write("DEBUG: creds length:", len(raw))
-
-        creds_dict = json.loads(raw)
-
-        st.write("DEBUG: JSON parsed OK")
+        creds_dict = json.loads(st.secrets["gcp"]["credentials"].replace('\n', '\\n'))
 
         creds = Credentials.from_service_account_info(
             creds_dict,
             scopes=["https://www.googleapis.com/auth/spreadsheets"]
         )
 
-        st.write("DEBUG: creds created")
-
         service = build("sheets", "v4", credentials=creds)
-
-        st.write("DEBUG: service built")
 
         spreadsheet_id = "1sPHHOXXAtVjtDxWNSB6G1OtLa-hmqNSCYScnduAUY8o"
         sheet_name = "Запуски"
 
-        today = datetime.datetime.now().strftime("%d.%m")
-
-        values = [[
-            "",
-            today,
-            brand,
-            geo_code,
-            lang_code,
-            domains[0] if domains else "",
-            "Шаблон",
-            "Ні",
-            "",
-            "План"
-        ]]
-
-        st.write("DEBUG: sending to sheets...")
-
-        service.spreadsheets().values().append(
+        # 🔥 1. беремо колонку C (Бренд)
+        result = service.spreadsheets().values().get(
             spreadsheetId=spreadsheet_id,
-            range=f"{sheet_name}!A1",
-            valueInputOption="USER_ENTERED",
-            body={"values": values},
+            range=f"{sheet_name}!C:C",
         ).execute()
 
-        st.success("✅ SUCCESS — записалось!")
+        values = result.get("values", [])
+
+        # 🔥 2. шукаємо перший пустий рядок
+        next_row = len(values) + 1
+
+        # 🔥 3. готуємо дані
+        today = datetime.datetime.now().strftime("%d.%m")
+
+        geo_name = _geo_name_ua(geo_code)
+        lang_name = _lang_name_ua(lang_code)
+        review_flag = "Так" if st.session_state.get("generate_review") else "Ні"
+
+        domain_templates = st.session_state.get("domain_templates", {})
+
+        rows = []
+
+        for d in domains:
+            tpl_id = domain_templates.get(d, "template_1")
+            tpl_label = TEMPLATES.get(tpl_id, {}).get("label", tpl_id)
+
+            rows.append([
+                today,        # B (Дата)
+                brand,        # C
+                geo_name,     # D
+                lang_name,    # E
+                d,            # F
+                tpl_label,    # G
+                review_flag,  # H
+            ])
+
+        # 🔥 4. записуємо з колонки B
+        service.spreadsheets().values().update(
+            spreadsheetId=spreadsheet_id,
+            range=f"{sheet_name}!B{next_row}",
+            valueInputOption="USER_ENTERED",
+            body={"values": rows},
+        ).execute()
+
+        st.success(f"✅ Записано в рядок {next_row}")
 
     except Exception as e:
-        st.error("❌ ERROR")
+        st.error("❌ Google Sheets ERROR")
         st.write(str(e))
 
 TEXT_EXTS = {".txt", ".xml", ".html", ".htm", ".php", ".css", ".js", ".json", ".md"}
