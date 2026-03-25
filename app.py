@@ -349,7 +349,7 @@ def add_to_google_sheet(brand, geo_code, lang_code, domains):
         st.write(str(e))
 
 def keitaro_create_offer(domain):
-    url = f"{st.secrets['KEITARO_URL']}/admin_api/v1.0/offers"
+    base = st.secrets['KEITARO_URL']
 
     headers = {
         "Api-Key": st.secrets["KEITARO_API_KEY"],
@@ -359,23 +359,29 @@ def keitaro_create_offer(domain):
     data = {
         "name": domain,
         "group_id": 3,
-        "status": "active",
-        "payout": "0",
-        "payout_type": "cpa",
-        "url": f"https://{domain}",
-        "parameters": []
+        "url": f"https://{domain}"
     }
 
-    r = requests.post(url, json=data, headers=headers, verify=False)
+    endpoints = [
+        "/admin_api/v1/offers",
+        "/admin_api/v1/offer",
+        "/admin_api/v1/offers/create"
+    ]
 
-    st.write("STATUS:", r.status_code)
-    st.write("RAW RESPONSE:", r.text)
+    for ep in endpoints:
+        url = base + ep
 
-    try:
-        return r.json()
-    except:
-        return {"error": r.text}
+        st.write(f"🔍 TRY: {url}")
 
+        r = requests.post(url, json=data, headers=headers, verify=False)
+
+        st.write("STATUS:", r.status_code)
+        st.write("RESPONSE:", r.text)
+
+        if r.status_code == 200:
+            return r.json()
+
+    return {"error": "no working endpoint"}
 
 def keitaro_create_campaign(domain, offer_id):
     url = f"{st.secrets['KEITARO_URL']}/admin_api/v1/campaigns"
