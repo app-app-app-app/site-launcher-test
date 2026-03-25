@@ -349,7 +349,7 @@ def add_to_google_sheet(brand, geo_code, lang_code, domains):
         st.write(str(e))
 
 def keitaro_create_offer(domain):
-    url = f"{st.secrets['KEITARO_URL']}/admin_api/v1/offers"
+    url = f"{st.secrets['KEITARO_URL']}/admin_api/v1.0/offers"
 
     headers = {
         "Api-Key": st.secrets["KEITARO_API_KEY"],
@@ -359,15 +359,23 @@ def keitaro_create_offer(domain):
     data = {
         "name": domain,
         "group_id": 3,
-        "url": f"https://{domain}"
+        "status": "active",
+        "payout": "0",
+        "payout_type": "cpa",
+        "url": f"https://{domain}",
+        "parameters": []
     }
 
     r = requests.post(url, json=data, headers=headers, verify=False)
+
+    st.write("STATUS:", r.status_code)
+    st.write("RAW RESPONSE:", r.text)
 
     try:
         return r.json()
     except:
         return {"error": r.text}
+
 
 def keitaro_create_campaign(domain, offer_id):
     url = f"{st.secrets['KEITARO_URL']}/admin_api/v1/campaigns"
