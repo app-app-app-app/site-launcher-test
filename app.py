@@ -12,6 +12,9 @@ import zipfile
 from pathlib import Path
 from typing import Optional
 from core.review_pipeline import generate_review
+import datetime
+from google.oauth2.service_account import Credentials
+from googleapiclient.discovery import build
 
 
 
@@ -272,6 +275,68 @@ init_state()
 # ---------------------------
 # Helpers
 # ---------------------------
+
+def add_to_google_sheet(brand, geo_code, lang_code, domains):
+    try:
+        import json
+
+        if "gcp" not in st.secrets:
+            st.warning("⚠️ Немає GCP secrets — пропускаю запис в таблицю")
+            return
+
+        creds_dict = json.loads(st.secrets["gcp"]["credentials"])
+
+        creds = Credentials.from_service_account_info(
+            creds_dict,
+            scopes=["https://www.googleapis.com/auth/spreadsheets"]
+        )
+
+        service = build("sheets", "v4", credentials=creds)
+
+        spreadsheet_id = "1sPHHOXXAtVjtDxWNSB6G1OtLa-hmqNSCYScnduAUY8o"
+        sheet_name = "Запуски"
+
+        today = datetime.datetime.now().strftime("%d.%m")
+
+        geo_name = _geo_name_ua(geo_code)
+        lang_name = _lang_name_ua(lang_code)
+
+        review_flag = "Так" if st.session_state.get("generate_review") else "Ні"
+
+        domain_templates = st.session_state.get("domain_templates", {})
+
+        rows = []
+
+        for d in domains:
+            tpl_id = domain_templates.get(d, "template_1")
+            tpl_label = TEMPLATES.get(tpl_id, {}).get("label", tpl_id)
+
+            rows.append([
+                "",                 # № (пусто)
+                today,              # Дата
+                brand,              # Бренд
+                geo_name,           # Гео
+                lang_name,          # Мова
+                d,                  # Домен
+                tpl_label,          # Шаблон
+                review_flag,        # Ревʼю
+                "", "",             # де знайдений / статус
+                "План",             # статус
+                "", "", "", ""      # інші поля
+            ])
+
+        service.spreadsheets().values().append(
+            spreadsheetId=spreadsheet_id,
+            range=f"{sheet_name}!A1",
+            valueInputOption="USER_ENTERED",
+            body={"values": rows},
+        ).execute()
+
+        st.success("✅ Додано в Google Sheets")
+
+    except Exception as e:
+        st.error(f"❌ Google Sheets помилка: {e}")
+
 
 TEXT_EXTS = {".txt", ".xml", ".html", ".htm", ".php", ".css", ".js", ".json", ".md"}
 
@@ -1505,6 +1570,26 @@ elif st.session_state.step == 2:
             use_container_width=True,
             on_click=step2_continue,
         )
+        if st.button("🚀 FULL LAUNCH", use_container_width=True):
+        
+            if len(st.session_state.chosen_domains) != int(st.session_state.sites_count):
+                st.error("❌ Обери всі домени")
+            else:
+                st.success("🚀 Запускаю повний процес...")
+        
+                # 1. Переходимо на step 3
+                step2_continue()
+        
+                # 2. Запис в таблицю
+                add_to_google_sheet(
+                    brand=st.session_state.get("brand"),
+                    geo_code=st.session_state.get("geo_code"),
+                    lang_code=st.session_state.get("target_lang"),
+                    domains=st.session_state.get("chosen_domains")
+                )
+        
+                st.success("🔥 FULL LAUNCH DONE")        
+        
 
 
     with right:
