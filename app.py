@@ -483,6 +483,30 @@ def keitaro_upload_file(offer_id, path, file_bytes):
 
     return r.status_code == 200
 
+
+def keitaro_add_file(offer_id, path, file_bytes):
+
+    import base64
+
+    url = f"{st.secrets['KEITARO_URL']}/admin_api/v1/offers/{offer_id}/add_file"
+
+    headers = {
+        "Api-Key": st.secrets["KEITARO_API_KEY"],
+        "Content-Type": "application/octet-stream"
+    }
+
+    encoded = base64.b64encode(file_bytes)
+
+    r = requests.post(
+        url,
+        headers=headers,
+        params={"path": path},   # 🔥 ВАЖЛИВО
+        data=encoded,           # 🔥 НЕ JSON
+        verify=False
+    )
+
+    return r.status_code == 200
+
 def keitaro_upload_site_from_zip(offer_id, zip_bytes):
 
     files = unzip_to_dict(zip_bytes)
@@ -494,8 +518,12 @@ def keitaro_upload_site_from_zip(offer_id, zip_bytes):
 
         st.write(f"📤 {i}/{total} → {path}")
 
-        ok = keitaro_upload_file(offer_id, path, content)
+        ok = keitaro_add_file(offer_id, path, content)
 
+        if not ok:
+            ok = keitaro_upload_file(offer_id, path, content)
+        
+        
         if ok:
             success += 1
         else:
