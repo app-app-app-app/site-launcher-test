@@ -428,27 +428,41 @@ def keitaro_upload_zip(offer_id, zip_path):
 
 
 
-def keitaro_upload_zip_bytes(offer_id, zip_bytes):
-    url = f"{st.secrets['KEITARO_URL']}/admin_api/v1/offers/{offer_id}/files"
+def keitaro_upload_zip_bytes(offer_id, zip_bytes, name):
+
+    url = f"{st.secrets['KEITARO_URL']}/admin_api/v1/landing_pages"
 
     headers = {
         "Api-Key": st.secrets["KEITARO_API_KEY"]
     }
 
     files = {
-        "file": ("site.zip", io.BytesIO(zip_bytes), "application/zip")
+        "archive": (f"{name}.zip", io.BytesIO(zip_bytes), "application/zip")
     }
 
     data = {
-        "folder": "/lander/"
+        "name": name,
+        "offer_id": offer_id
     }
 
-    r = requests.post(url, headers=headers, files=files, data=data, verify=False)
+    r = requests.post(
+        url,
+        headers=headers,
+        files=files,
+        data=data,
+        verify=False
+    )
 
     st.write("ZIP STATUS:", r.status_code)
     st.write("ZIP RESPONSE:", r.text)
 
-    return r.status_code == 200
+    if r.status_code == 200:
+        try:
+            return r.json().get("id")
+        except:
+            return None
+
+    return None
 
 
 TEMPLATE_ID = 373
@@ -1933,12 +1947,13 @@ elif st.session_state.step == 2:
                 # 🔥 ZIP upload
                 zip_bytes = generated_zips.get(d)
         
-                ok = keitaro_upload_zip_bytes(offer_id, zip_bytes)
-        
-                if not ok:
+                lp_id = keitaro_upload_zip_bytes(offer_id, zip_bytes, d)
+
+                if not lp_id:
                     st.write("❌ ZIP fail")
                     continue
         
+
                 campaign = keitaro_clone_campaign(TEMPLATE_ID, d)
         
                 if isinstance(campaign, list):
