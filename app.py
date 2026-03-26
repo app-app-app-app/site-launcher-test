@@ -431,20 +431,18 @@ def keitaro_upload_zip(offer_id, zip_path):
 import base64
 import requests
 
-
 def keitaro_upload_zip_bytes(offer_id, zip_bytes, name):
 
     url = f"{st.secrets['KEITARO_URL']}/admin_api/v1/offers/{offer_id}/update_file"
 
     headers = {
-        "Api-Key": st.secrets["KEITARO_API_KEY"]
+        "Api-Key": st.secrets["KEITARO_API_KEY"],
+        "Content-Type": "application/json"
     }
 
-    # 🔥 1. КОДУЄМО В BASE64
     encoded = base64.b64encode(zip_bytes).decode()
 
-    # 🔥 2. QUERY PARAMS
-    params = {
+    payload = {
         "path": f"{name}.zip",
         "data": encoded
     }
@@ -452,7 +450,7 @@ def keitaro_upload_zip_bytes(offer_id, zip_bytes, name):
     r = requests.put(
         url,
         headers=headers,
-        params=params,   # ⚠️ НЕ files!
+        json=payload,   # 🔥 ВОТ ЦЕ КЛЮЧ
         verify=False
     )
 
