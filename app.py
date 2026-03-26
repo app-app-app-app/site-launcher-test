@@ -486,6 +486,31 @@ def keitaro_update_campaign_offer(campaign_id, offer_id):
     return r.text
 
 
+def keitaro_update_campaign_meta(campaign_id, domain):
+    import time
+
+    url = f"{st.secrets['KEITARO_URL']}/admin_api/v1/campaigns/{campaign_id}"
+
+    headers = {
+        "Api-Key": st.secrets["KEITARO_API_KEY"],
+        "Content-Type": "application/json"
+    }
+
+    alias = domain.replace(".", "-") + "-" + str(int(time.time()))
+
+    data = {
+        "name": domain,
+        "alias": alias,
+        "group_id": 2
+    }
+
+    r = requests.put(url, json=data, headers=headers, verify=False)
+
+    st.write("META UPDATE STATUS:", r.status_code)
+    st.write("META UPDATE RESPONSE:", r.text)
+
+    return r.text
+
 
 
 TEXT_EXTS = {".txt", ".xml", ".html", ".htm", ".php", ".css", ".js", ".json", ".md"}
@@ -1765,7 +1790,7 @@ elif st.session_state.step == 2:
         
                     st.write(f"--- 🚀 Обробка: {d}")
         
-                    # 🔹 CREATE OFFER
+                    # 🔹 1. CREATE OFFER
                     offer = keitaro_create_offer(d)
                     st.write("📩 OFFER RESPONSE:", offer)
         
@@ -1775,7 +1800,7 @@ elif st.session_state.step == 2:
                         st.write(f"❌ {d} — offer не створився")
                         continue
         
-                    # 🔹 CLONE CAMPAIGN
+                    # 🔹 2. CLONE CAMPAIGN
                     campaign = keitaro_clone_campaign(TEMPLATE_ID, d)
                     st.write("📩 CLONE RESPONSE:", campaign)
         
@@ -1785,13 +1810,17 @@ elif st.session_state.step == 2:
                         st.write(f"❌ {d} — campaign не створилась")
                         continue
         
-                    # 🔹 UPDATE OFFER В FLOW
+                    # 🔥 3. ОНОВЛЮЄМО META (назва + alias)
+                    meta = keitaro_update_campaign_meta(campaign_id, d)
+                    st.write("📩 META RESPONSE:", meta)
+        
+                    # 🔥 4. ВСТАВЛЯЄМО OFFER В FLOW
                     update = keitaro_update_campaign_offer(campaign_id, offer_id)
                     st.write("📩 UPDATE RESPONSE:", update)
         
                     st.write(f"🔥 {d} — ГОТОВО")
         
-                    # 🔹 ZIP (поки вимкнено)
+                    # 🔹 ZIP (поки OFF)
                     st.write("📦 ZIP upload skipped (debug режим)")
                     # keitaro_upload_zip(offer_id, zip_path)
         
