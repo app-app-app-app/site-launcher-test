@@ -450,7 +450,7 @@ def keitaro_clone_campaign(template_id, domain):
     r = requests.post(url, json=data, headers=headers, verify=False)
 
     st.write("CLONE STATUS:", r.status_code)
-    st.write("CLONE RESPONSE:", r.text)
+    st.write("CLONE RAW:", r.text)
 
     try:
         return r.json()
