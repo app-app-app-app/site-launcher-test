@@ -835,7 +835,11 @@ def generate_zips_for_domains(domains):
         lang_php = lang_files.get(d)
 
         if not lang_php:
-            raise Exception(f"{d} — немає lang.php")
+            # 🔥 fallback — беремо шаблонний lang.php
+            tpl = st.session_state["domain_templates"].get(d, "template_1")
+            lang_path = TEMPLATES[tpl]["lang"]
+            with open(lang_path, "r", encoding="utf-8") as f:
+                lang_php = f.read()
 
         zip_bytes = build_domain_site_zip(
             domain=d,
@@ -1510,7 +1514,7 @@ def step2_continue():
 
     # скидаємо генерацію lang.php
     st.session_state["step3_autogen_done"] = False
-    st.session_state["generated_files"] = []
+    st.session_state["generated_files"] = {}
     st.session_state["last_generation_time"] = None
     st.session_state["archives_ready"] = False
     st.session_state["generated_site_zips"] = {}
