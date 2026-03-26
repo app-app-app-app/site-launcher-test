@@ -443,19 +443,12 @@ def keitaro_upload_zip_bytes(offer_id, zip_bytes):
         "folder": "/lander/"
     }
 
-    r = requests.post(
-        url,
-        headers=headers,
-        files=files,
-        data=data,
-        verify=False
-    )
+    r = requests.post(url, headers=headers, files=files, data=data, verify=False)
 
     st.write("ZIP STATUS:", r.status_code)
     st.write("ZIP RESPONSE:", r.text)
 
     return r.status_code == 200
-
 
 
 TEMPLATE_ID = 373
@@ -709,6 +702,53 @@ def build_domain_site_zip(
 
     buf.seek(0)
     return buf.getvalue()
+
+
+def run_step3_generation(domains):
+
+    brand = (st.session_state.get("brand") or "").strip()
+    geo_code = st.session_state.get("geo_code") or "UNKNOWN"
+    target_lang = st.session_state.get("target_lang") or "en"
+
+    geo_currency = "EUR"
+    if geo_code != "UNKNOWN" and geo_code in geo:
+        geo_currency = geo[geo_code].get("currency", "EUR")
+
+    MODEL = "gpt-5-mini"
+
+    def progress_cb(p, msg):
+        # можна нічого не робити в FULL LAUNCH
+        pass
+
+    files = generate_lang_files_multi(
+        template1_bytes=open(TEMPLATES["template_1"]["lang"], "rb").read(),
+        template2_bytes=open(TEMPLATES["template_2"]["lang"], "rb").read(),
+        template3_bytes=open(TEMPLATES["template_3"]["lang"], "rb").read(),
+        domain_templates=st.session_state.get("domain_templates", {}),
+        geo_code=geo_code,
+        geo_currency=geo_currency,
+        target_lang=target_lang,
+        domains=domains,
+        brand=brand,
+        model=MODEL,
+        progress_cb=progress_cb,
+        geo_defaults=geo,
+    )
+
+    # 🔥 НОРМАЛІЗАЦІЯ В dict (ВАЖЛИВО)
+    generated = {}
+
+    for item in files:
+        domain = item.get("domain")
+        content = item.get("content")
+
+        if domain and content:
+            generated[domain] = content
+
+    st.session_state["generated_files"] = generated
+
+    return generated
+
 
 def build_all_sites_zip(
     site_template_dir: str,
@@ -1818,44 +1858,20 @@ elif st.session_state.step == 2:
         
             domains = st.session_state.get("chosen_domains", [])
         
-            if len(domains) == 0:
+            if not domains:
                 st.error("❌ Нема доменів")
                 st.stop()
         
             # =========================
-            # 🔥 1. ГЕНЕРАЦІЯ (STEP 3)
+            # 🔥 1. STEP 3
             # =========================
             st.write("🧠 Генерація сайтів...")
         
             try:
-                files = generate_lang_files_multi(
-                    template1_bytes=open(TEMPLATES["template_1"]["lang"], "rb").read(),
-                    template2_bytes=open(TEMPLATES["template_2"]["lang"], "rb").read(),
-                    template3_bytes=open(TEMPLATES["template_3"]["lang"], "rb").read(),
-                    domain_templates=st.session_state.get("domain_templates", {}),
-                    geo_code=geo_code,
-                    geo_currency=geo_currency,
-                    target_lang=target_lang,
-                    domains=domains,
-                    brand=brand,
-                    model=MODEL,
-                    progress_cb=progress_cb,
-                    geo_defaults=geo,
-                )
-        
-                generated = {}
-                for item in result:
-                    domain = item.get("domain")
-                    content = item.get("content")
-                    if domain and content:
-                        generated[domain] = content
-        
-                st.session_state["generated_files"] = generated
-        
-                st.write(f"✅ Згенеровано {len(generated)} сайтів")
-        
+                run_step3_generation(domains)
+                st.write("✅ Генерація завершена")
             except Exception as e:
-                st.error(f"❌ Генерація впала: {str(e)}")
+                st.error(f"❌ Step 3 впав: {str(e)}")
                 st.stop()
         
             # =========================
@@ -1891,10 +1907,8 @@ elif st.session_state.step == 2:
             st.write("✅ ZIP готові")
         
             # =========================
-            # 🔥 3. GOOGLE SHEETS
+            # 🔥 3. SHEETS
             # =========================
-            st.write("📊 Запис в таблицю...")
-        
             add_to_google_sheet(
                 brand=st.session_state.get("brand"),
                 geo_code=st.session_state.get("geo_code"),
@@ -1905,13 +1919,10 @@ elif st.session_state.step == 2:
             # =========================
             # 🔥 4. KEITARO
             # =========================
-            st.write("🎯 Keitaro...")
-        
             for d in domains:
         
-                st.write(f"--- 🚀 Обробка: {d}")
+                st.write(f"--- 🚀 {d}")
         
-                # OFFER
                 offer = keitaro_create_offer(d)
                 offer_id = offer.get("id")
         
@@ -1920,7 +1931,7 @@ elif st.session_state.step == 2:
                     continue
         
                 # 🔥 ZIP upload
-                zip_bytes = st.session_state["generated_site_zips"].get(d)
+                zip_bytes = generated_zips.get(d)
         
                 ok = keitaro_upload_zip_bytes(offer_id, zip_bytes)
         
@@ -1928,9 +1939,6 @@ elif st.session_state.step == 2:
                     st.write("❌ ZIP fail")
                     continue
         
-                st.write("📦 ZIP залитий")
-        
-                # CAMPAIGN
                 campaign = keitaro_clone_campaign(TEMPLATE_ID, d)
         
                 if isinstance(campaign, list):
@@ -1947,18 +1955,18 @@ elif st.session_state.step == 2:
                 streams = keitaro_get_streams(campaign_id)
         
                 if not streams:
-                    st.write("❌ no streams")
+                    st.write("❌ streams fail")
                     continue
         
                 stream_id = streams[0].get("id")
         
                 keitaro_update_stream(stream_id, offer_id)
         
-                st.write(f"✅ {d} готово")
+                st.write(f"✅ {d}")
         
             st.success("🔥 FULL LAUNCH DONE")
 
-            
+
     with right:
         st.markdown("### Список доменів")
         st.markdown("### ➕ Додати домен вручну")
