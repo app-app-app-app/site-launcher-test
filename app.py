@@ -820,6 +820,38 @@ def _build_launch_task_text(brand: str, domains: list[str]) -> str:
         f"Домени:\n{doms}\n\n"
         f"Дія:\n- Додати домен у панель\n- Налаштувати DNS\n- Розгорнути сайт/лонч\n"
     )
+
+
+def generate_zips_for_domains(domains):
+    generated = {}
+
+    for d in domains:
+        tpl = st.session_state["domain_templates"].get(d, "template_1")
+        tpl_dir = TEMPLATES[tpl]["dir"]
+
+        # 🔥 ОСЬ ТУТ ВАЖЛИВО:
+        # беремо lang.php який вже генерується у step 3
+        lang_files = st.session_state.get("generated_files", {})
+        lang_php = lang_files.get(d)
+
+        if not lang_php:
+            raise Exception(f"{d} — немає lang.php")
+
+        zip_bytes = build_domain_site_zip(
+            domain=d,
+            site_template_dir=tpl_dir,
+            lang_php_content=lang_php,
+            target_lang=st.session_state["target_lang"],
+            geo_code=st.session_state["geo_code"],
+            brand=st.session_state["brand"],
+        )
+
+        generated[d] = zip_bytes
+
+    st.session_state["generated_site_zips"] = generated
+
+
+
 def copy_button(text: str, label: str, key: str):
     # json.dumps правильно екранує перенос рядків/лапки/табуляції
     payload = json.dumps(text or "")
@@ -1790,6 +1822,17 @@ elif st.session_state.step == 2:
 
         if st.button("🚀 FULL LAUNCH", use_container_width=True):
         
+            # 🔥 0. ГЕНЕРАЦІЯ ZIP (як у Step 3)
+
+            st.write("📦 Генерація сайтів...")
+
+            try:
+                generate_zips_for_domains(domains)
+                st.write("✅ ZIP готові")
+            except Exception as e:
+                st.error(f"❌ Помилка генерації ZIP: {str(e)}")
+                st.stop()
+
             st.write("🚀 FULL LAUNCH старт")
         
             domains = st.session_state.get("chosen_domains", [])
@@ -1822,7 +1865,40 @@ elif st.session_state.step == 2:
                     if not offer_id:
                         st.write(f"❌ {d} — offer не створився")
                         continue
+
+                    # 🔥 ZIP ОДРАЗУ ПІСЛЯ OFFER
+
+                    zip_bytes = st.session_state.get("generated_site_zips", {}).get(d)
+
+                    if not zip_bytes:
+                        st.write(f"❌ {d} — нема ZIP")
+                        continue
+
+                    ok = keitaro_upload_zip_bytes(offer_id, zip_bytes)
+
+                    if not ok:
+                        st.write(f"❌ {d} — ZIP не залився")
+                        continue
+
+                    st.write(f"📦 {d} — ZIP залитий")
         
+
+                    # 🔥 ZIP ОДРАЗУ ПІСЛЯ OFFER
+
+                    zip_bytes = st.session_state.get("generated_site_zips", {}).get(d)
+
+                    if not zip_bytes:
+                        st.write(f"❌ {d} — нема ZIP")
+                        continue
+
+                    ok = keitaro_upload_zip_bytes(offer_id, zip_bytes)
+
+                    if not ok:
+                        st.write(f"❌ {d} — ZIP не залився")
+                        continue
+
+                    st.write(f"📦 {d} — ZIP залитий")
+                    
                     # 🔹 2. CLONE CAMPAIGN
                     campaign = keitaro_clone_campaign(TEMPLATE_ID, d)
                     st.write("📩 CLONE RESPONSE:", campaign)
@@ -1857,21 +1933,6 @@ elif st.session_state.step == 2:
                     update = keitaro_update_stream(stream_id, offer_id)
                     st.write("📩 STREAM UPDATE RESPONSE:", update)
         
-                    st.write(f"🔥 {d} — ГОТОВО")
-        
-                    zip_bytes = st.session_state.get("generated_site_zips", {}).get(d)
-
-                    if not zip_bytes:
-                        st.write(f"❌ {d} — нема ZIP")
-                        continue
-
-                    ok = keitaro_upload_zip_bytes(offer_id, zip_bytes)
-
-                    if not ok:
-                        st.write(f"❌ {d} — ZIP не залився")
-                        continue
-
-                    st.write(f"📦 {d} — ZIP залитий")
         
                 # 3. ⚙️ Генерація (поки OFF)
                 st.write("⚙️ Генерація сайтів (SKIPPED)")
