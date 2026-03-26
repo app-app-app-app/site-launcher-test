@@ -245,7 +245,7 @@ def init_state():
     st.session_state.setdefault("task_buy_index", "ДА")  # ДА/НІ
 
     # step3 generated files
-    st.session_state.setdefault("generated_files", [])
+    st.session_state.setdefault("generated_files", {})
 
     st.session_state.setdefault("step2_autocheck_done", False)
     st.session_state.setdefault("step3_autogen_done", False)
@@ -2068,6 +2068,16 @@ elif st.session_state.step == 3:
                         progress_cb=progress_cb,
                         geo_defaults=geo,
                     )
+                    generated = {}
+
+                    for item in st.session_state.get("generated_files", []):
+                        domain = item.get("domain")
+                        content = item.get("content")
+
+                        if domain and content:
+                            generated[domain] = content
+
+                    st.session_state["generated_files"] = generated
 
                     st.session_state["generated_files"] = files
                     status.success("Готово ✅")
