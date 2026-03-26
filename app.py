@@ -404,7 +404,7 @@ def keitaro_create_campaign(domain):
         return {"error": r.text}
 
 
-def keitaro_upload_zip(offer_id, zip_path):
+def keitaro_upload_zip_bytes(offer_id, zip_bytes):
     url = f"{st.secrets['KEITARO_URL']}/admin_api/v1/offers/{offer_id}/files"
 
     headers = {
@@ -412,19 +412,26 @@ def keitaro_upload_zip(offer_id, zip_path):
     }
 
     files = {
-        "file": open(zip_path, "rb")
+        "file": ("site.zip", zip_bytes, "application/zip")
     }
 
     data = {
         "folder": "/lander/"
     }
 
-    r = requests.post(url, headers=headers, files=files, data=data, verify=False)
+    r = requests.post(
+        url,
+        headers=headers,
+        files=files,
+        data=data,
+        verify=False,
+        timeout=30
+    )
 
-    st.write("ZIP STATUS:", r.status_code)
-    st.write("ZIP RESPONSE:", r.text)
+    print("ZIP STATUS:", r.status_code)
+    print("ZIP RESPONSE:", r.text)
 
-    return r.text
+    return r.status_code == 200
 
 
 TEMPLATE_ID = 373
@@ -1852,9 +1859,19 @@ elif st.session_state.step == 2:
         
                     st.write(f"🔥 {d} — ГОТОВО")
         
-                    # 🔹 ZIP (поки OFF)
-                    st.write("📦 ZIP upload skipped (debug режим)")
-                    # keitaro_upload_zip(offer_id, zip_path)
+                    zip_bytes = st.session_state.get("generated_site_zips", {}).get(d)
+
+                    if not zip_bytes:
+                        st.write(f"❌ {d} — нема ZIP")
+                        continue
+
+                    ok = keitaro_upload_zip_bytes(offer_id, zip_bytes)
+
+                    if not ok:
+                        st.write(f"❌ {d} — ZIP не залився")
+                        continue
+
+                    st.write(f"📦 {d} — ZIP залитий")
         
                 # 3. ⚙️ Генерація (поки OFF)
                 st.write("⚙️ Генерація сайтів (SKIPPED)")
