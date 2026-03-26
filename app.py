@@ -430,7 +430,7 @@ def keitaro_upload_zip(offer_id, zip_path):
 
 def keitaro_upload_zip_bytes(offer_id, zip_bytes, name):
 
-    url = f"{st.secrets['KEITARO_URL']}/admin_api/v1/landing_pages"
+    url = f"{st.secrets['KEITARO_URL']}/admin_api/v1/offers/{offer_id}/update_file"
 
     headers = {
         "Api-Key": st.secrets["KEITARO_API_KEY"]
@@ -438,6 +438,7 @@ def keitaro_upload_zip_bytes(offer_id, zip_bytes, name):
 
     tmp_path = f"/tmp/{name}.zip"
 
+    # 🔥 пишемо файл (важливо)
     with open(tmp_path, "wb") as f:
         f.write(zip_bytes)
 
@@ -447,28 +448,18 @@ def keitaro_upload_zip_bytes(offer_id, zip_bytes, name):
             "file": (f"{name}.zip", f, "application/zip")
         }
 
-        data = {
-            "name": name
-        }
-
-        r = requests.post(
+        r = requests.put(
             url,
             headers=headers,
             files=files,
-            data=data,
             verify=False
         )
 
     st.write("ZIP STATUS:", r.status_code)
     st.write("ZIP RESPONSE:", r.text)
 
-    if r.status_code == 200:
-        try:
-            return r.json().get("id")
-        except:
-            return None
-
-    return None
+    return r.status_code == 200
+    
 
 
 TEMPLATE_ID = 373
@@ -1954,9 +1945,9 @@ elif st.session_state.step == 2:
                 # 🔥 ZIP upload
                 zip_bytes = generated_zips.get(d)
         
-                lp_id = keitaro_upload_zip_bytes(offer_id, zip_bytes, d)
+                ok = keitaro_upload_zip_bytes(offer_id, zip_bytes, d)
 
-                if not lp_id:
+                if not ok:
                     st.write("❌ ZIP fail")
                     continue
         
