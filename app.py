@@ -458,34 +458,6 @@ def keitaro_clone_campaign(template_id, domain):
         return {"error": r.text}
 
 
-def keitaro_update_campaign_offer(campaign_id, offer_id):
-    url = f"{st.secrets['KEITARO_URL']}/admin_api/v1/campaigns/{campaign_id}"
-
-    headers = {
-        "Api-Key": st.secrets["KEITARO_API_KEY"],
-        "Content-Type": "application/json"
-    }
-
-    data = {
-        "streams": [
-            {
-                "offers": [
-                    {
-                        "id": offer_id
-                    }
-                ]
-            }
-        ]
-    }
-
-    r = requests.put(url, json=data, headers=headers, verify=False)
-
-    st.write("UPDATE STATUS:", r.status_code)
-    st.write("UPDATE RESPONSE:", r.text)
-
-    return r.text
-
-
 def keitaro_update_campaign_meta(campaign_id, domain):
     import time
 
@@ -511,6 +483,47 @@ def keitaro_update_campaign_meta(campaign_id, domain):
 
     return r.text
 
+
+def keitaro_get_streams(campaign_id):
+    url = f"{st.secrets['KEITARO_URL']}/admin_api/v1/campaigns/{campaign_id}/streams"
+
+    headers = {
+        "Api-Key": st.secrets["KEITARO_API_KEY"]
+    }
+
+    r = requests.get(url, headers=headers, verify=False)
+
+    st.write("STREAMS STATUS:", r.status_code)
+    st.write("STREAMS RESPONSE:", r.text)
+
+    try:
+        return r.json()
+    except:
+        return []
+
+
+def keitaro_update_stream(stream_id, offer_id):
+    url = f"{st.secrets['KEITARO_URL']}/admin_api/v1/streams/{stream_id}"
+
+    headers = {
+        "Api-Key": st.secrets["KEITARO_API_KEY"],
+        "Content-Type": "application/json"
+    }
+
+    data = {
+        "offers": [
+            {
+                "id": offer_id
+            }
+        ]
+    }
+
+    r = requests.put(url, json=data, headers=headers, verify=False)
+
+    st.write("STREAM UPDATE STATUS:", r.status_code)
+    st.write("STREAM UPDATE RESPONSE:", r.text)
+
+    return r.text
 
 
 TEXT_EXTS = {".txt", ".xml", ".html", ".htm", ".php", ".css", ".js", ".json", ".md"}
@@ -1795,7 +1808,6 @@ elif st.session_state.step == 2:
                     st.write("📩 OFFER RESPONSE:", offer)
         
                     offer_id = offer.get("id")
-        
                     if not offer_id:
                         st.write(f"❌ {d} — offer не створився")
                         continue
@@ -1804,19 +1816,30 @@ elif st.session_state.step == 2:
                     campaign = keitaro_clone_campaign(TEMPLATE_ID, d)
                     st.write("📩 CLONE RESPONSE:", campaign)
         
-                    campaign_id = campaign.get("id")
-        
+                    campaign_id = campaign.get("id") if isinstance(campaign, dict) else None
                     if not campaign_id:
                         st.write(f"❌ {d} — campaign не створилась")
                         continue
         
-                    # 🔥 3. ОНОВЛЮЄМО META (назва + alias)
+                    # 🔹 3. UPDATE META (назва + alias)
                     meta = keitaro_update_campaign_meta(campaign_id, d)
                     st.write("📩 META RESPONSE:", meta)
         
-                    # 🔥 4. ВСТАВЛЯЄМО OFFER В FLOW
-                    update = keitaro_update_campaign_offer(campaign_id, offer_id)
-                    st.write("📩 UPDATE RESPONSE:", update)
+                    # 🔹 4. ОТРИМАТИ STREAM
+                    streams = keitaro_get_streams(campaign_id)
+        
+                    if not streams or len(streams) == 0:
+                        st.write(f"❌ {d} — streams не знайдені")
+                        continue
+        
+                    stream_id = streams[0].get("id")
+                    if not stream_id:
+                        st.write(f"❌ {d} — stream без id")
+                        continue
+        
+                    # 🔹 5. ОНОВИТИ STREAM (вставити offer)
+                    update = keitaro_update_stream(stream_id, offer_id)
+                    st.write("📩 STREAM UPDATE RESPONSE:", update)
         
                     st.write(f"🔥 {d} — ГОТОВО")
         
