@@ -459,8 +459,78 @@ def keitaro_upload_zip_bytes(offer_id, zip_bytes, name):
 
     return r.status_code == 200
 
-TEMPLATE_ID = 373
 
+
+import base64
+
+def keitaro_upload_file(offer_id, path, file_bytes):
+
+    url = f"{st.secrets['KEITARO_URL']}/admin_api/v1/offers/{offer_id}/update_file"
+
+    headers = {
+        "Api-Key": st.secrets["KEITARO_API_KEY"],
+        "Content-Type": "application/json"
+    }
+
+    encoded = base64.b64encode(file_bytes).decode()
+
+    payload = {
+        "path": path,
+        "data": encoded
+    }
+
+    r = requests.put(url, headers=headers, json=payload, verify=False)
+
+    return r.status_code == 200
+
+def keitaro_upload_site_from_zip(offer_id, zip_bytes):
+
+    files = unzip_to_dict(zip_bytes)
+
+    total = len(files)
+    success = 0
+
+    for i, (path, content) in enumerate(files.items(), 1):
+
+        st.write(f"📤 {i}/{total} → {path}")
+
+        ok = keitaro_upload_file(offer_id, path, content)
+
+        if ok:
+            success += 1
+        else:
+            st.write(f"❌ FAIL: {path}")
+
+    st.write(f"✅ Uploaded: {success}/{total}")
+
+    return success == total
+
+
+
+import zipfile
+import io
+
+def unzip_to_dict(zip_bytes):
+    files = {}
+
+    with zipfile.ZipFile(io.BytesIO(zip_bytes)) as z:
+        for name in z.namelist():
+
+            if name.endswith("/"):
+                continue
+
+            # 🔥 прибираємо першу папку
+            parts = name.split("/", 1)
+            clean_name = parts[1] if len(parts) > 1 else parts[0]
+
+            files[clean_name] = z.read(name)
+
+    return files
+    
+
+
+
+TEMPLATE_ID = 373
 def keitaro_clone_campaign(template_id, domain):
     import time
 
@@ -1942,7 +2012,7 @@ elif st.session_state.step == 2:
                 # 🔥 ZIP upload
                 zip_bytes = generated_zips.get(d)
         
-                ok = keitaro_upload_zip_bytes(offer_id, zip_bytes, d)
+                ok = keitaro_upload_site_from_zip(offer_id, zip_bytes)
 
                 if not ok:
                     st.write("❌ ZIP fail")
