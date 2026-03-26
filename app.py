@@ -245,7 +245,7 @@ def init_state():
     st.session_state.setdefault("task_buy_index", "ДА")  # ДА/НІ
 
     # step3 generated files
-    st.session_state.setdefault("generated_files", {})
+    st.session_state.setdefault("generated_files", [])
 
     st.session_state.setdefault("step2_autocheck_done", False)
     st.session_state.setdefault("step3_autogen_done", False)
@@ -278,34 +278,6 @@ init_state()
 # ---------------------------
 # Helpers
 # ---------------------------
-
-def run_step3_generation(domains):
-    """
-    Запускає Step 3 програмно і повертає dict:
-    {domain: lang_php}
-    """
-
-    result = generate_lang_files_multi(
-        domains=domains,
-        template1_bytes=TEMPLATES["template_1"]["bytes"],
-        template2_bytes=TEMPLATES["template_2"]["bytes"],
-        template3_bytes=TEMPLATES["template_3"]["bytes"],
-        geo_currency=st.session_state.get("geo_code"),
-        domain_templates=st.session_state.get("domain_templates"),
-    )
-
-    # 🔥 нормалізація
-    generated = {}
-
-    for item in result:
-        domain = item.get("domain")
-        content = item.get("content")
-
-        if domain and content:
-            generated[domain] = content
-
-    return generated
-
 
 def add_to_google_sheet(brand, geo_code, lang_code, domains):
     try:
@@ -432,6 +404,30 @@ def keitaro_create_campaign(domain):
         return {"error": r.text}
 
 
+def keitaro_upload_zip(offer_id, zip_path):
+    url = f"{st.secrets['KEITARO_URL']}/admin_api/v1/offers/{offer_id}/files"
+
+    headers = {
+        "Api-Key": st.secrets["KEITARO_API_KEY"]
+    }
+
+    files = {
+        "file": open(zip_path, "rb")
+    }
+
+    data = {
+        "folder": "/lander/"
+    }
+
+    r = requests.post(url, headers=headers, files=files, data=data, verify=False)
+
+    st.write("ZIP STATUS:", r.status_code)
+    st.write("ZIP RESPONSE:", r.text)
+
+    return r.text
+
+
+
 def keitaro_upload_zip_bytes(offer_id, zip_bytes):
     url = f"{st.secrets['KEITARO_URL']}/admin_api/v1/offers/{offer_id}/files"
 
@@ -452,14 +448,14 @@ def keitaro_upload_zip_bytes(offer_id, zip_bytes):
         headers=headers,
         files=files,
         data=data,
-        verify=False,
-        timeout=60
+        verify=False
     )
 
     st.write("ZIP STATUS:", r.status_code)
     st.write("ZIP RESPONSE:", r.text)
 
     return r.status_code == 200
+
 
 
 TEMPLATE_ID = 373
@@ -848,42 +844,6 @@ def _build_launch_task_text(brand: str, domains: list[str]) -> str:
         f"Домени:\n{doms}\n\n"
         f"Дія:\n- Додати домен у панель\n- Налаштувати DNS\n- Розгорнути сайт/лонч\n"
     )
-
-
-def generate_zips_for_domains(domains):
-    generated = {}
-
-    for d in domains:
-        tpl = st.session_state["domain_templates"].get(d, "template_1")
-        tpl_dir = TEMPLATES[tpl]["dir"]
-
-        # 🔥 ОСЬ ТУТ ВАЖЛИВО:
-        # беремо lang.php який вже генерується у step 3
-        lang_files = st.session_state.get("generated_files", {})
-        lang_php = lang_files.get(d)
-
-        if not lang_php:
-            # 🔥 fallback — беремо шаблонний lang.php
-            tpl = st.session_state["domain_templates"].get(d, "template_1")
-            lang_path = TEMPLATES[tpl]["lang"]
-            with open(lang_path, "r", encoding="utf-8") as f:
-                lang_php = f.read()
-
-        zip_bytes = build_domain_site_zip(
-            domain=d,
-            site_template_dir=tpl_dir,
-            lang_php_content=lang_php,
-            target_lang=st.session_state["target_lang"],
-            geo_code=st.session_state["geo_code"],
-            brand=st.session_state["brand"],
-        )
-
-        generated[d] = zip_bytes
-
-    st.session_state["generated_site_zips"] = generated
-
-
-
 def copy_button(text: str, label: str, key: str):
     # json.dumps правильно екранує перенос рядків/лапки/табуляції
     payload = json.dumps(text or "")
@@ -1235,7 +1195,7 @@ def decision_go():
     st.session_state.needs_rerun = True
     st.session_state.step2_autocheck_done = False
     st.session_state.step3_autogen_done = False
-    st.session_state.generated_files = {}
+    st.session_state.generated_files = []
     st.session_state["generated_site_zips"] = {}
     st.session_state.pop("last_generation_time", None)
 
@@ -1542,7 +1502,7 @@ def step2_continue():
 
     # скидаємо генерацію lang.php
     st.session_state["step3_autogen_done"] = False
-    st.session_state["generated_files"] = {}
+    st.session_state["generated_files"] = []
     st.session_state["last_generation_time"] = None
     st.session_state["archives_ready"] = False
     st.session_state["generated_site_zips"] = {}
@@ -1858,34 +1818,77 @@ elif st.session_state.step == 2:
         
             domains = st.session_state.get("chosen_domains", [])
         
-            if not domains:
+            if len(domains) == 0:
                 st.error("❌ Нема доменів")
                 st.stop()
         
-            # 🔥 1. STEP 3 (ГЕНЕРАЦІЯ)
-            st.write("🧠 Генерація контенту (Step 3)...")
+            # =========================
+            # 🔥 1. ГЕНЕРАЦІЯ (STEP 3)
+            # =========================
+            st.write("🧠 Генерація сайтів...")
         
             try:
-                generated_files = run_step3_generation(domains)
-                st.session_state["generated_files"] = generated_files
+                result = generate_lang_files_multi(
+                    domains=domains,
+                    template1_bytes=open(TEMPLATES["template_1"]["lang"], "rb").read(),
+                    template2_bytes=open(TEMPLATES["template_2"]["lang"], "rb").read(),
+                    template3_bytes=open(TEMPLATES["template_3"]["lang"], "rb").read(),
+                    geo_currency=st.session_state.get("geo_code"),
+                    domain_templates=st.session_state.get("domain_templates"),
+                )
         
-                st.write(f"✅ Згенеровано: {len(generated_files)} сайтів")
+                generated = {}
+                for item in result:
+                    domain = item.get("domain")
+                    content = item.get("content")
+                    if domain and content:
+                        generated[domain] = content
+        
+                st.session_state["generated_files"] = generated
+        
+                st.write(f"✅ Згенеровано {len(generated)} сайтів")
         
             except Exception as e:
-                st.error(f"❌ Step 3 впав: {str(e)}")
+                st.error(f"❌ Генерація впала: {str(e)}")
                 st.stop()
         
+            # =========================
             # 🔥 2. ZIP
+            # =========================
             st.write("📦 Збірка ZIP...")
         
-            try:
-                generate_zips_for_domains(domains)
-                st.write("✅ ZIP готові")
-            except Exception as e:
-                st.error(f"❌ ZIP помилка: {str(e)}")
-                st.stop()
+            generated_zips = {}
         
-            # 🔥 3. SHEETS
+            for d in domains:
+                tpl = st.session_state["domain_templates"].get(d, "template_1")
+                tpl_dir = TEMPLATES[tpl]["dir"]
+        
+                lang_php = st.session_state["generated_files"].get(d)
+        
+                if not lang_php:
+                    st.error(f"❌ {d} — немає lang.php")
+                    continue
+        
+                zip_bytes = build_domain_site_zip(
+                    domain=d,
+                    site_template_dir=tpl_dir,
+                    lang_php_content=lang_php,
+                    target_lang=st.session_state.get("target_lang"),
+                    geo_code=st.session_state.get("geo_code"),
+                    brand=st.session_state.get("brand"),
+                )
+        
+                generated_zips[d] = zip_bytes
+        
+            st.session_state["generated_site_zips"] = generated_zips
+        
+            st.write("✅ ZIP готові")
+        
+            # =========================
+            # 🔥 3. GOOGLE SHEETS
+            # =========================
+            st.write("📊 Запис в таблицю...")
+        
             add_to_google_sheet(
                 brand=st.session_state.get("brand"),
                 geo_code=st.session_state.get("geo_code"),
@@ -1893,11 +1896,16 @@ elif st.session_state.step == 2:
                 domains=domains
             )
         
+            # =========================
             # 🔥 4. KEITARO
+            # =========================
+            st.write("🎯 Keitaro...")
+        
             for d in domains:
         
-                st.write(f"--- 🚀 {d}")
+                st.write(f"--- 🚀 Обробка: {d}")
         
+                # OFFER
                 offer = keitaro_create_offer(d)
                 offer_id = offer.get("id")
         
@@ -1905,6 +1913,7 @@ elif st.session_state.step == 2:
                     st.write("❌ offer fail")
                     continue
         
+                # 🔥 ZIP upload
                 zip_bytes = st.session_state["generated_site_zips"].get(d)
         
                 ok = keitaro_upload_zip_bytes(offer_id, zip_bytes)
@@ -1913,6 +1922,9 @@ elif st.session_state.step == 2:
                     st.write("❌ ZIP fail")
                     continue
         
+                st.write("📦 ZIP залитий")
+        
+                # CAMPAIGN
                 campaign = keitaro_clone_campaign(TEMPLATE_ID, d)
         
                 if isinstance(campaign, list):
@@ -1920,12 +1932,23 @@ elif st.session_state.step == 2:
                 else:
                     campaign_id = campaign.get("id")
         
+                if not campaign_id:
+                    st.write("❌ campaign fail")
+                    continue
+        
+                keitaro_update_campaign_meta(campaign_id, d)
+        
                 streams = keitaro_get_streams(campaign_id)
+        
+                if not streams:
+                    st.write("❌ no streams")
+                    continue
+        
                 stream_id = streams[0].get("id")
         
                 keitaro_update_stream(stream_id, offer_id)
         
-                st.write(f"✅ {d}")
+                st.write(f"✅ {d} готово")
         
             st.success("🔥 FULL LAUNCH DONE")
 
@@ -2079,16 +2102,6 @@ elif st.session_state.step == 3:
                         progress_cb=progress_cb,
                         geo_defaults=geo,
                     )
-                    generated = {}
-
-                    for item in st.session_state.get("generated_files", []):
-                        domain = item.get("domain")
-                        content = item.get("content")
-
-                        if domain and content:
-                            generated[domain] = content
-
-                    st.session_state["generated_files"] = generated
 
                     st.session_state["generated_files"] = files
                     status.success("Готово ✅")
