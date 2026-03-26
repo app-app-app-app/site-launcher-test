@@ -511,9 +511,13 @@ def keitaro_update_stream(stream_id, offer_id):
     }
 
     data = {
+        "schema": "landings",  # 🔥 важливо
         "offers": [
             {
-                "id": offer_id
+                "offer_id": offer_id,   # 🔥 НЕ id
+                "position": 1,
+                "weight": 100,
+                "state": "active"
             }
         ]
     }
