@@ -1816,7 +1816,12 @@ elif st.session_state.step == 2:
                     campaign = keitaro_clone_campaign(TEMPLATE_ID, d)
                     st.write("📩 CLONE RESPONSE:", campaign)
         
-                    campaign_id = campaign.get("id") if isinstance(campaign, dict) else None
+                    if isinstance(campaign, list) and len(campaign) > 0:
+                        campaign_id = campaign[0].get("id")
+                    elif isinstance(campaign, dict):
+                        campaign_id = campaign.get("id")
+                    else:
+                        campaign_id = None
                     if not campaign_id:
                         st.write(f"❌ {d} — campaign не створилась")
                         continue
