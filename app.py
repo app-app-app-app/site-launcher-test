@@ -427,6 +427,66 @@ def keitaro_upload_zip(offer_id, zip_path):
     return r.text
 
 
+TEMPLATE_ID = 373
+
+def keitaro_clone_campaign(template_id, domain):
+    import time
+
+    url = f"{st.secrets['KEITARO_URL']}/admin_api/v1/campaigns/{template_id}/clone"
+
+    headers = {
+        "Api-Key": st.secrets["KEITARO_API_KEY"],
+        "Content-Type": "application/json"
+    }
+
+    alias = domain.replace(".", "-") + "-" + str(int(time.time()))
+
+    data = {
+        "name": domain,
+        "alias": alias,
+        "group_id": 2
+    }
+
+    r = requests.post(url, json=data, headers=headers, verify=False)
+
+    st.write("CLONE STATUS:", r.status_code)
+    st.write("CLONE RESPONSE:", r.text)
+
+    try:
+        return r.json()
+    except:
+        return {"error": r.text}
+
+
+def keitaro_update_campaign_offer(campaign_id, offer_id):
+    url = f"{st.secrets['KEITARO_URL']}/admin_api/v1/campaigns/{campaign_id}"
+
+    headers = {
+        "Api-Key": st.secrets["KEITARO_API_KEY"],
+        "Content-Type": "application/json"
+    }
+
+    data = {
+        "streams": [
+            {
+                "offers": [
+                    {
+                        "id": offer_id
+                    }
+                ]
+            }
+        ]
+    }
+
+    r = requests.put(url, json=data, headers=headers, verify=False)
+
+    st.write("UPDATE STATUS:", r.status_code)
+    st.write("UPDATE RESPONSE:", r.text)
+
+    return r.text
+
+
+
 
 TEXT_EXTS = {".txt", ".xml", ".html", ".htm", ".php", ".css", ".js", ".json", ".md"}
 
@@ -1683,13 +1743,13 @@ elif st.session_state.step == 2:
         
             st.write("🚀 FULL LAUNCH старт")
         
-            if len(st.session_state.chosen_domains) == 0:
+            domains = st.session_state.get("chosen_domains", [])
+        
+            if len(domains) == 0:
                 st.error("❌ Нема доменів")
             else:
         
-                domains = st.session_state.get("chosen_domains")
-        
-                # 1. таблиця
+                # 1. 📊 Таблиця
                 st.write("📊 Запис в таблицю...")
                 add_to_google_sheet(
                     brand=st.session_state.get("brand"),
@@ -1698,42 +1758,48 @@ elif st.session_state.step == 2:
                     domains=domains
                 )
         
-                # 2. Keitaro (СПОЧАТКУ!)
+                # 2. 🎯 Keitaro
                 st.write("🎯 Keitaro...")
-                
+        
                 for d in domains:
-                
+        
+                    st.write(f"--- 🚀 Обробка: {d}")
+        
+                    # 🔹 CREATE OFFER
                     offer = keitaro_create_offer(d)
-                    offer_id = offer.get("id")
-                    
-                    if offer_id:
-                    
-                        campaign = keitaro_create_campaign(d)
-                        campaign_id = campaign.get("id")
-                    
-                    else:
-                        st.write(f"❌ {d} — offer не створився")
-
-                        st.write("📦 ZIP upload skipped (debug режим)")
-                        # keitaro_upload_zip(offer_id, zip_path)
-    
                     st.write("📩 OFFER RESPONSE:", offer)
-
+        
                     offer_id = offer.get("id")
-                
-                    if offer_id:
-                        campaign = keitaro_create_campaign(d)
-                        st.write("📩 CAMPAIGN RESPONSE:", campaign)
-                        st.write(f"✅ {d} — кампанія створена")
-                    else:
-                        st.write(f"❌ {d} — не створився offer")
-                
-                # 3. генерація (в КІНЦІ!)
-                st.write("⚙️ Генерація сайтів...")
+        
+                    if not offer_id:
+                        st.write(f"❌ {d} — offer не створився")
+                        continue
+        
+                    # 🔹 CLONE CAMPAIGN
+                    campaign = keitaro_clone_campaign(TEMPLATE_ID, d)
+                    st.write("📩 CLONE RESPONSE:", campaign)
+        
+                    campaign_id = campaign.get("id")
+        
+                    if not campaign_id:
+                        st.write(f"❌ {d} — campaign не створилась")
+                        continue
+        
+                    # 🔹 UPDATE OFFER В FLOW
+                    update = keitaro_update_campaign_offer(campaign_id, offer_id)
+                    st.write("📩 UPDATE RESPONSE:", update)
+        
+                    st.write(f"🔥 {d} — ГОТОВО")
+        
+                    # 🔹 ZIP (поки вимкнено)
+                    st.write("📦 ZIP upload skipped (debug режим)")
+                    # keitaro_upload_zip(offer_id, zip_path)
+        
+                # 3. ⚙️ Генерація (поки OFF)
+                st.write("⚙️ Генерація сайтів (SKIPPED)")
                 # step2_continue()
         
                 st.success("🔥 FULL LAUNCH DONE")
-
 
     with right:
         st.markdown("### Список доменів")
