@@ -436,22 +436,30 @@ def keitaro_upload_zip_bytes(offer_id, zip_bytes, name):
         "Api-Key": st.secrets["KEITARO_API_KEY"]
     }
 
-    files = {
-        "archive": (f"{name}.zip", io.BytesIO(zip_bytes), "application/zip")
-    }
+    # 🔥 пишемо у файл (ВАЖЛИВО)
+    tmp_path = f"/tmp/{name}.zip"
 
-    data = {
-        "name": name,
-        "offer_id": offer_id
-    }
+    with open(tmp_path, "wb") as f:
+        f.write(zip_bytes)
 
-    r = requests.post(
-        url,
-        headers=headers,
-        files=files,
-        data=data,
-        verify=False
-    )
+    with open(tmp_path, "rb") as f:
+
+        files = {
+            "file": (f"{name}.zip", f, "application/zip")
+        }
+
+        data = {
+            "name": name,
+            "offer_id": offer_id
+        }
+
+        r = requests.post(
+            url,
+            headers=headers,
+            files=files,
+            data=data,
+            verify=False
+        )
 
     st.write("ZIP STATUS:", r.status_code)
     st.write("ZIP RESPONSE:", r.text)
