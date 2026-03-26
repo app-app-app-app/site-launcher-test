@@ -428,6 +428,10 @@ def keitaro_upload_zip(offer_id, zip_path):
 
 
 
+import base64
+import requests
+
+
 def keitaro_upload_zip_bytes(offer_id, zip_bytes, name):
 
     url = f"{st.secrets['KEITARO_URL']}/admin_api/v1/offers/{offer_id}/update_file"
@@ -436,31 +440,26 @@ def keitaro_upload_zip_bytes(offer_id, zip_bytes, name):
         "Api-Key": st.secrets["KEITARO_API_KEY"]
     }
 
-    tmp_path = f"/tmp/{name}.zip"
+    # 🔥 1. КОДУЄМО В BASE64
+    encoded = base64.b64encode(zip_bytes).decode()
 
-    # 🔥 пишемо файл (важливо)
-    with open(tmp_path, "wb") as f:
-        f.write(zip_bytes)
+    # 🔥 2. QUERY PARAMS
+    params = {
+        "path": f"{name}.zip",
+        "data": encoded
+    }
 
-    with open(tmp_path, "rb") as f:
-
-        files = {
-            "file": (f"{name}.zip", f, "application/zip")
-        }
-
-        r = requests.put(
-            url,
-            headers=headers,
-            files=files,
-            verify=False
-        )
+    r = requests.put(
+        url,
+        headers=headers,
+        params=params,   # ⚠️ НЕ files!
+        verify=False
+    )
 
     st.write("ZIP STATUS:", r.status_code)
     st.write("ZIP RESPONSE:", r.text)
 
     return r.status_code == 200
-    
-
 
 TEMPLATE_ID = 373
 
