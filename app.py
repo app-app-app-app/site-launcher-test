@@ -436,7 +436,6 @@ def keitaro_upload_zip_bytes(offer_id, zip_bytes, name):
         "Api-Key": st.secrets["KEITARO_API_KEY"]
     }
 
-    # 🔥 пишемо у файл (ВАЖЛИВО)
     tmp_path = f"/tmp/{name}.zip"
 
     with open(tmp_path, "wb") as f:
@@ -449,8 +448,7 @@ def keitaro_upload_zip_bytes(offer_id, zip_bytes, name):
         }
 
         data = {
-            "name": name,
-            "offer_id": offer_id
+            "name": name
         }
 
         r = requests.post(
@@ -563,7 +561,8 @@ def keitaro_update_stream(stream_id, offer_id):
                 "offer_id": offer_id,   # 🔥 НЕ id
                 "position": 1,
                 "weight": 100,
-                "state": "active"
+                "state": "active",
+                "landing_page_id": lp_id
             }
         ]
     }
