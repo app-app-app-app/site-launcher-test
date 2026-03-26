@@ -1207,7 +1207,7 @@ def decision_go():
     st.session_state.needs_rerun = True
     st.session_state.step2_autocheck_done = False
     st.session_state.step3_autogen_done = False
-    st.session_state.generated_files = []
+    st.session_state.generated_files = {}
     st.session_state["generated_site_zips"] = {}
     st.session_state.pop("last_generation_time", None)
 
