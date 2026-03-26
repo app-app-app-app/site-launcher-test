@@ -412,7 +412,7 @@ def keitaro_upload_zip_bytes(offer_id, zip_bytes):
     }
 
     files = {
-        "file": ("site.zip", zip_bytes, "application/zip")
+        "file": ("site.zip", io.BytesIO(zip_bytes), "application/zip")
     }
 
     data = {
@@ -425,11 +425,11 @@ def keitaro_upload_zip_bytes(offer_id, zip_bytes):
         files=files,
         data=data,
         verify=False,
-        timeout=30
+        timeout=60
     )
 
-    print("ZIP STATUS:", r.status_code)
-    print("ZIP RESPONSE:", r.text)
+    st.write("ZIP STATUS:", r.status_code)
+    st.write("ZIP RESPONSE:", r.text)
 
     return r.status_code == 200
 
@@ -1828,15 +1828,41 @@ elif st.session_state.step == 2:
         
             st.write("🚀 FULL LAUNCH старт")
         
-            # 🔥 0. отримуємо домени ПЕРШИМ
             domains = st.session_state.get("chosen_domains", [])
         
             if not domains:
                 st.error("❌ Нема доменів")
                 st.stop()
         
-            # 🔥 1. ГЕНЕРАЦІЯ ZIP
-            st.write("📦 Генерація сайтів...")
+            # 🔥 1. ГЕНЕРАЦІЯ КОНТЕНТУ (ГОЛОВНЕ!)
+            st.write("🧠 Генерація контенту...")
+        
+            try:
+                lang_results = generate_lang_files_multi(
+                    domains=domains,
+                    brand=st.session_state.get("brand"),
+                    geo_code=st.session_state.get("geo_code"),
+                    lang=st.session_state.get("target_lang"),
+                )
+        
+                # 👉 ПРИВОДИМО ДО dict
+                generated = {}
+                for item in lang_results:
+                    domain = item.get("domain")
+                    content = item.get("content")
+                    if domain and content:
+                        generated[domain] = content
+        
+                st.session_state["generated_files"] = generated
+        
+                st.write("✅ Контент згенерований")
+        
+            except Exception as e:
+                st.error(f"❌ Помилка генерації контенту: {str(e)}")
+                st.stop()
+        
+            # 🔥 2. ЗБІРКА ZIP
+            st.write("📦 Збірка ZIP...")
         
             try:
                 generate_zips_for_domains(domains)
@@ -1845,7 +1871,7 @@ elif st.session_state.step == 2:
                 st.error(f"❌ Помилка генерації ZIP: {str(e)}")
                 st.stop()
         
-            # 🔥 2. GOOGLE SHEETS
+            # 🔥 3. GOOGLE SHEETS
             st.write("📊 Запис в таблицю...")
             add_to_google_sheet(
                 brand=st.session_state.get("brand"),
@@ -1854,14 +1880,14 @@ elif st.session_state.step == 2:
                 domains=domains
             )
         
-            # 🔥 3. KEITARO
+            # 🔥 4. KEITARO
             st.write("🎯 Keitaro...")
         
             for d in domains:
         
                 st.write(f"--- 🚀 Обробка: {d}")
         
-                # 🔹 1. CREATE OFFER
+                # 🔹 CREATE OFFER
                 offer = keitaro_create_offer(d)
                 st.write("📩 OFFER RESPONSE:", offer)
         
@@ -1870,7 +1896,7 @@ elif st.session_state.step == 2:
                     st.write(f"❌ {d} — offer не створився")
                     continue
         
-                # 🔥 2. ZIP ОДРАЗУ ПІСЛЯ OFFER
+                # 🔥 ZIP
                 zip_bytes = st.session_state.get("generated_site_zips", {}).get(d)
         
                 if not zip_bytes:
@@ -1885,7 +1911,7 @@ elif st.session_state.step == 2:
         
                 st.write(f"📦 {d} — ZIP залитий")
         
-                # 🔹 3. CLONE CAMPAIGN
+                # 🔹 CLONE CAMPAIGN
                 campaign = keitaro_clone_campaign(TEMPLATE_ID, d)
                 st.write("📩 CLONE RESPONSE:", campaign)
         
@@ -1900,11 +1926,10 @@ elif st.session_state.step == 2:
                     st.write(f"❌ {d} — campaign не створилась")
                     continue
         
-                # 🔹 4. UPDATE META
-                meta = keitaro_update_campaign_meta(campaign_id, d)
-                st.write("📩 META RESPONSE:", meta)
+                # 🔹 UPDATE META
+                keitaro_update_campaign_meta(campaign_id, d)
         
-                # 🔹 5. ОТРИМАТИ STREAM
+                # 🔹 STREAM
                 streams = keitaro_get_streams(campaign_id)
         
                 if not streams:
@@ -1912,17 +1937,14 @@ elif st.session_state.step == 2:
                     continue
         
                 stream_id = streams[0].get("id")
-                if not stream_id:
-                    st.write(f"❌ {d} — stream без id")
-                    continue
         
-                # 🔹 6. ОНОВИТИ STREAM
-                update = keitaro_update_stream(stream_id, offer_id)
-                st.write("📩 STREAM UPDATE RESPONSE:", update)
+                keitaro_update_stream(stream_id, offer_id)
         
                 st.write(f"✅ {d} — готово")
         
             st.success("🔥 FULL LAUNCH DONE")
+
+            
     with right:
         st.markdown("### Список доменів")
         st.markdown("### ➕ Додати домен вручну")
