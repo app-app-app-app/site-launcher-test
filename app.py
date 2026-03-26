@@ -1842,7 +1842,7 @@ elif st.session_state.step == 2:
                     domains=domains,
                     brand=st.session_state.get("brand"),
                     geo_code=st.session_state.get("geo_code"),
-                    lang=st.session_state.get("target_lang"),
+                    target_lang=st.session_state.get("target_lang"),
                 )
         
                 # 👉 ПРИВОДИМО ДО dict
