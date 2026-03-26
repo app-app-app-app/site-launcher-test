@@ -1828,13 +1828,19 @@ elif st.session_state.step == 2:
             st.write("🧠 Генерація сайтів...")
         
             try:
-                result = generate_lang_files_multi(
-                    domains=domains,
+                files = generate_lang_files_multi(
                     template1_bytes=open(TEMPLATES["template_1"]["lang"], "rb").read(),
                     template2_bytes=open(TEMPLATES["template_2"]["lang"], "rb").read(),
                     template3_bytes=open(TEMPLATES["template_3"]["lang"], "rb").read(),
-                    geo_currency=st.session_state.get("geo_code"),
-                    domain_templates=st.session_state.get("domain_templates"),
+                    domain_templates=st.session_state.get("domain_templates", {}),
+                    geo_code=geo_code,
+                    geo_currency=geo_currency,
+                    target_lang=target_lang,
+                    domains=domains,
+                    brand=brand,
+                    model=MODEL,
+                    progress_cb=progress_cb,
+                    geo_defaults=geo,
                 )
         
                 generated = {}
