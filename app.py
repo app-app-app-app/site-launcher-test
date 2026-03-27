@@ -2206,59 +2206,127 @@ elif st.session_state.step == 2:
             st.success("🔥 FULL LAUNCH DONE")
 
 
-        if st.button("🧪 ZIP TEST (АРХІВ)"):
+        if st.button("🧪 TEMPLATE TEST"):
         
-            st.write("🚀 ZIP TEST старт")
+            st.write("🚀 TEMPLATE TEST старт")
+        
+            import zipfile
+            import io
+            import time
+            import requests
+            import base64
         
             zip_path = "pujancafinova.com.zip"
+            TEMPLATE_ID = 123  # 🔥 ВСТАВ СЮДИ ID СВОГО TEMPLATE OFFER
         
-            # 🔹 1. створюємо offer
-            offer = keitaro_create_offer("zip-test.com")
+            # 🔹 1. КЛОНУЄМО TEMPLATE
+            clone_url = f"{st.secrets['KEITARO_URL']}/admin_api/v1/offers/{TEMPLATE_ID}/clone"
+        
+            headers = {
+                "Api-Key": st.secrets["KEITARO_API_KEY"],
+                "Content-Type": "application/json"
+            }
+        
+            payload = {
+                "name": "zip-test.com"
+            }
+        
+            r = requests.post(clone_url, headers=headers, json=payload, verify=False)
+        
+            st.write("CLONE STATUS:", r.status_code)
+            st.write("CLONE RESPONSE:", r.text)
+        
+            if r.status_code != 200:
+                st.error("❌ clone fail")
+                st.stop()
+        
+            offer = r.json()
             offer_id = offer.get("id")
         
             if not offer_id:
-                st.error("❌ offer не створився")
+                st.error("❌ offer_id не отримано")
                 st.stop()
         
             st.write(f"✅ offer_id: {offer_id}")
         
-            # 🔹 2. upload ZIP
+            # 🔹 2. ЧИТАЄМО ZIP
             try:
-                import requests
+                with open(zip_path, "rb") as f:
+                    zip_bytes = f.read()
+            except Exception as e:
+                st.error(f"❌ ZIP read error: {e}")
+                st.stop()
         
-                url = f"{st.secrets['KEITARO_URL']}/admin_api/v1/offers/{offer_id}/update_file"
+            z = zipfile.ZipFile(io.BytesIO(zip_bytes))
+            files = z.namelist()
         
-                headers = {
-                    "Api-Key": st.secrets["KEITARO_API_KEY"]
+            # 🔹 3. UPDATE FILES
+            update_url = f"{st.secrets['KEITARO_URL']}/admin_api/v1/offers/{offer_id}/update_file"
+        
+            success = 0
+            total = 0
+        
+            for i, path in enumerate(files, 1):
+        
+                if path.endswith("/"):
+                    continue
+        
+                # 🔥 прибираємо кореневу папку
+                if "/" in path:
+                    path_clean = path.split("/", 1)[1]
+                else:
+                    path_clean = path
+        
+                if not path_clean:
+                    continue
+        
+                # ❌ пропускаємо macOS сміття
+                if (
+                    path.startswith("__MACOSX") or
+                    path.startswith("._") or
+                    "/._" in path or
+                    path.endswith(".DS_Store")
+                ):
+                    continue
+        
+                st.write(f"📤 {i} → {path_clean}")
+        
+                try:
+                    content = z.read(path)
+                except Exception as e:
+                    st.write(f"❌ READ FAIL {path}: {e}")
+                    continue
+        
+                total += 1
+        
+                encoded = base64.b64encode(content).decode()
+        
+                payload = {
+                    "path": path_clean,
+                    "data": encoded
                 }
         
-                with open(zip_path, "rb") as f:
-                    files = {
-                        "file": ("archive.zip", f, "application/zip")
-                    }
+                ok = False
         
-                    data = {
-                        "path": ""  # 🔥 КРИТИЧНО
-                    }
+                for attempt in range(3):
+                    try:
+                        r = requests.put(update_url, headers=headers, json=payload, verify=False)
+                        if r.status_code == 200:
+                            ok = True
+                            break
+                    except Exception as e:
+                        st.write(f"❌ EXCEPTION {path_clean}: {e}")
         
-                    r = requests.put(
-                        url,
-                        headers=headers,
-                        files=files,
-                        data=data,
-                        verify=False
-                    )
+                    time.sleep(0.5)
         
-                st.write("ZIP STATUS:", r.status_code)
-                st.write("ZIP RESPONSE:", r.text)
-        
-                if r.status_code == 200:
-                    st.success("🔥 ZIP upload done")
+                if ok:
+                    success += 1
                 else:
-                    st.error("❌ ZIP fail")
+                    st.write(f"❌ FAIL: {path_clean}")
         
-            except Exception as e:
-                st.error(f"❌ ZIP upload exception: {e}")
+                time.sleep(0.2)
+        
+            st.write(f"✅ Uploaded: {success}/{total}")
 
             
     with right:
