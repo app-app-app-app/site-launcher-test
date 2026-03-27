@@ -360,7 +360,7 @@ def keitaro_create_offer(domain):
         "name": domain,
         "group_id": 3,
         "offer_type": "local",
-        keitaro_create_offer
+        "action_type": "local"   # 🔥 ВАЖЛИВО
     }
 
     r = requests.post(url, json=data, headers=headers, verify=False)
