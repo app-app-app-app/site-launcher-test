@@ -2240,7 +2240,7 @@ elif st.session_state.step == 2:
                 st.error("❌ clone fail")
                 st.stop()
         
-            offer = r.json()
+            offer = r.json()[0]
             offer_id = offer.get("id")
         
             if not offer_id:
