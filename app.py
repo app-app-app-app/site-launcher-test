@@ -2217,7 +2217,7 @@ elif st.session_state.step == 2:
             import base64
         
             zip_path = "pujancafinova.com.zip"
-            TEMPLATE_ID = 123  # 🔥 ВСТАВ СЮДИ ID СВОГО TEMPLATE OFFER
+            TEMPLATE_ID = 435  # 🔥 ВСТАВ СЮДИ ID СВОГО TEMPLATE OFFER
         
             # 🔹 1. КЛОНУЄМО TEMPLATE
             clone_url = f"{st.secrets['KEITARO_URL']}/admin_api/v1/offers/{TEMPLATE_ID}/clone"
