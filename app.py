@@ -405,62 +405,20 @@ def keitaro_create_campaign(domain):
     except:
         return {"error": r.text}
 
+    return r.status_code == 200
 
-def keitaro_upload_zip(offer_id, zip_path):
+
+
+def keitaro_clear_offer(offer_id):
     url = f"{st.secrets['KEITARO_URL']}/admin_api/v1/offers/{offer_id}/files"
 
     headers = {
         "Api-Key": st.secrets["KEITARO_API_KEY"]
     }
 
-    files = {
-        "file": open(zip_path, "rb")
-    }
+    r = requests.delete(url, headers=headers, verify=False)
 
-    data = {
-        "folder": "/lander/"
-    }
-
-    r = requests.post(url, headers=headers, files=files, data=data, verify=False)
-
-    st.write("ZIP STATUS:", r.status_code)
-    st.write("ZIP RESPONSE:", r.text)
-
-    return r.text
-
-
-
-import base64
-import requests
-
-def keitaro_upload_zip_bytes(offer_id, zip_bytes, name):
-
-    url = f"{st.secrets['KEITARO_URL']}/admin_api/v1/offers/{offer_id}/update_file"
-
-    headers = {
-        "Api-Key": st.secrets["KEITARO_API_KEY"],
-        "Content-Type": "application/json"
-    }
-
-    encoded = base64.b64encode(zip_bytes).decode()
-
-    payload = {
-        "path": f"{name}.zip",
-        "data": encoded
-    }
-
-    r = requests.put(
-        url,
-        headers=headers,
-        json=payload,   # 🔥 ВОТ ЦЕ КЛЮЧ
-        verify=False
-    )
-
-    st.write("ZIP STATUS:", r.status_code)
-    st.write("ZIP RESPONSE:", r.text)
-
-    return r.status_code == 200
-
+    st.write("🧹 CLEAR:", r.status_code, r.text)
 
 
 import base64
@@ -522,16 +480,8 @@ def keitaro_upload_site_from_zip(offer_id, zip_bytes):
 
         st.write(f"📤 {i}/{total} → {path}")
 
-        ok = keitaro_add_file(offer_id, path, content)
-
         if not ok:
             ok = keitaro_upload_file(offer_id, path, content)
-        
-        
-        if ok:
-            success += 1
-        else:
-            st.write(f"❌ FAIL: {path}")
 
     st.write(f"✅ Uploaded: {success}/{total}")
 
@@ -2034,7 +1984,30 @@ elif st.session_state.step == 2:
                 st.write(f"--- 🚀 {d}")
         
                 offer = keitaro_create_offer(d)
+                
                 offer_id = offer.get("id")
+                
+                if not offer_id:
+                    st.error(f"❌ {d} — не отримали offer_id")
+                    continue
+                
+                # 🔥 1. ЧИСТИМО ОФЕР
+                keitaro_clear_offer(offer_id)
+                
+                # 🔥 2. ЗАЛИВАЄМО САЙТ
+                zip_bytes = st.session_state["generated_site_zips"].get(d)
+                
+                if not zip_bytes:
+                    st.error(f"❌ {d} — нема ZIP")
+                    continue
+                
+                ok = keitaro_upload_site_from_zip(offer_id, zip_bytes)
+                
+                if not ok:
+                    st.error(f"❌ {d} — upload fail")
+                else:
+                    st.success(f"✅ {d} — сайт залитий")
+                    
         
                 if not offer_id:
                     st.write("❌ offer fail")
