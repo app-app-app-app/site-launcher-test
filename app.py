@@ -499,7 +499,7 @@ def keitaro_add_file(offer_id, path, file_bytes):
     }
 
     files = {
-        "data": base64.b64encode(file_bytes).decode()
+        "data": ("file", file_bytes)
     }
 
     r = requests.post(
