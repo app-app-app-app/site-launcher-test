@@ -1975,8 +1975,10 @@ elif st.session_state.step == 2:
                 lang_php = st.session_state["generated_files"].get(d)
         
                 if not lang_php:
-                    st.error(f"❌ {d} — немає lang.php")
+                    st.warning(f"⚠️ {d} — lang.php не згенерився, пропускаю ZIP")
+                    generated_zips[d] = None
                     continue
+            
         
                 zip_bytes = build_domain_site_zip(
                     domain=d,
@@ -2023,8 +2025,10 @@ elif st.session_state.step == 2:
                 zip_bytes = st.session_state["generated_site_zips"].get(d)
                 
                 if not zip_bytes:
-                    st.error(f"❌ {d} — нема ZIP")
-                    continue
+                    if not zip_bytes:
+                    if not zip_bytes:
+                else:
+                    upload_ok = keitaro_upload_site_from_zip(offer_id, zip_bytes)
                 
                 ok = keitaro_upload_site_from_zip(offer_id, zip_bytes)
                 
