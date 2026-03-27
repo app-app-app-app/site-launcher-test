@@ -2135,34 +2135,61 @@ elif st.session_state.step == 2:
             st.success("🔥 FULL LAUNCH DONE")
 
 
-        if st.button("🧪 ZIP TEST (БЕЗ ГЕНЕРАЦІЇ)"):
+        if st.button("🧪 ZIP TEST (ФАЙЛАМИ)"):
         
             st.write("🚀 ZIP TEST старт")
         
-            test_domain = "test-zip.com"
+            import zipfile
+            import io
         
-            # 1. створюємо офер
-            offer = keitaro_create_offer(test_domain)
+            zip_path = "pujancafinova.com.zip"
         
+            # 1. створюємо offer
+            offer = keitaro_create_offer("zip-test.com")
             offer_id = offer.get("id")
         
             if not offer_id:
-                st.error("❌ offer не створився")
+                st.error("❌ offer fail")
                 st.stop()
         
             st.write(f"✅ offer_id: {offer_id}")
         
-            # 2. ЗАЛИВАЄМО ГОТОВИЙ ZIP
-            ok = keitaro_upload_zip_direct(
-                offer_id,
-                "pujancafinova.com.zip"
-            )
+            # 2. читаємо ZIP
+            with open(zip_path, "rb") as f:
+                zip_bytes = f.read()
         
-            if ok:
-                st.success("🔥 ZIP upload done")
-            else:
-                st.error("❌ ZIP fail")
-
+            z = zipfile.ZipFile(io.BytesIO(zip_bytes))
+        
+            files = z.namelist()
+        
+            success = 0
+        
+            for i, path in enumerate(files, 1):
+        
+                if path.endswith("/"):
+                    continue
+        
+                st.write(f"📤 {i} → {path}")
+        
+                content = z.read(path)
+        
+                # 🔥 КРИТИЧНО: retry
+                ok = False
+                for attempt in range(3):
+                    ok = keitaro_upload_file_smart(offer_id, path, content)
+                    if ok:
+                        break
+        
+                if ok:
+                    success += 1
+                else:
+                    st.write(f"❌ FAIL: {path}")
+        
+                # 🔥 КРИТИЧНО: throttle
+                import time
+                time.sleep(0.2)
+        
+            st.write(f"✅ Uploaded: {success}/{len(files)}")
 
     with right:
         st.markdown("### Список доменів")
