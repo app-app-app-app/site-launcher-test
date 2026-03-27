@@ -2141,56 +2141,85 @@ elif st.session_state.step == 2:
         
             import zipfile
             import io
+            import time
         
             zip_path = "pujancafinova.com.zip"
         
-            # 1. створюємо offer
+            # 🔹 1. створюємо offer
             offer = keitaro_create_offer("zip-test.com")
             offer_id = offer.get("id")
         
             if not offer_id:
-                st.error("❌ offer fail")
+                st.error("❌ offer не створився")
                 st.stop()
         
             st.write(f"✅ offer_id: {offer_id}")
         
-            # 2. читаємо ZIP
-            with open(zip_path, "rb") as f:
-                zip_bytes = f.read()
+            # 🔹 2. читаємо ZIP
+            try:
+                with open(zip_path, "rb") as f:
+                    zip_bytes = f.read()
+            except Exception as e:
+                st.error(f"❌ Не вдалося відкрити ZIP: {e}")
+                st.stop()
         
             z = zipfile.ZipFile(io.BytesIO(zip_bytes))
-        
             files = z.namelist()
         
             success = 0
+            total = 0
         
             for i, path in enumerate(files, 1):
         
+                # ❌ пропускаємо папки
                 if path.endswith("/"):
                     continue
         
-                st.write(f"📤 {i} → {path}")
+                # 🔥 ФІКС №1: прибираємо кореневу папку
+                if "/" in path:
+                    path_clean = path.split("/", 1)[1]
+                else:
+                    path_clean = path
         
-                content = z.read(path)
+                # ❌ якщо після цього пусто — пропускаємо
+                if not path_clean:
+                    continue
         
-                # 🔥 КРИТИЧНО: retry
+                st.write(f"📤 {i} → {path_clean}")
+        
+                try:
+                    content = z.read(path)
+                except Exception as e:
+                    st.write(f"❌ READ FAIL {path}: {e}")
+                    continue
+        
+                total += 1
+        
+                # 🔥 retry
                 ok = False
                 for attempt in range(3):
-                    ok = keitaro_upload_file_smart(offer_id, path, content)
+                    try:
+                        ok = keitaro_upload_file_smart(offer_id, path_clean, content)
+                    except Exception as e:
+                        st.write(f"❌ EXCEPTION {path_clean}: {e}")
+                        ok = False
+        
                     if ok:
                         break
+        
+                    time.sleep(0.5)
         
                 if ok:
                     success += 1
                 else:
-                    st.write(f"❌ FAIL: {path}")
+                    st.write(f"❌ FAIL: {path_clean}")
         
-                # 🔥 КРИТИЧНО: throttle
-                import time
+                # 🔥 throttle (критично)
                 time.sleep(0.2)
         
-            st.write(f"✅ Uploaded: {success}/{len(files)}")
+            st.write(f"✅ Uploaded: {success}/{total}")
 
+            
     with right:
         st.markdown("### Список доменів")
         st.markdown("### ➕ Додати домен вручну")
