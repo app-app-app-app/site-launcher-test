@@ -526,6 +526,36 @@ def keitaro_upload_zip_direct(offer_id, zip_path):
     return r.status_code == 200
 
 
+def keitaro_upload_zip(offer_id, zip_path):
+
+    url = f"{st.secrets['KEITARO_URL']}/admin_api/v1/offers/{offer_id}/update_file"
+
+    headers = {
+        "Api-Key": st.secrets["KEITARO_API_KEY"]
+    }
+
+    with open(zip_path, "rb") as f:
+        files = {
+            "file": ("archive.zip", f, "application/zip")
+        }
+
+        data = {
+            "path": ""   # 🔥 КРИТИЧНО
+        }
+
+        r = requests.put(
+            url,
+            headers=headers,
+            files=files,
+            data=data,
+            verify=False
+        )
+
+    st.write("ZIP:", r.status_code, r.text)
+    return r.status_code == 200
+
+
+
 def keitaro_add_file(offer_id, path, content):
 
     url = f"{st.secrets['KEITARO_URL']}/admin_api/v1/offers/{offer_id}/update_file"
@@ -2153,13 +2183,9 @@ elif st.session_state.step == 2:
             st.success("🔥 FULL LAUNCH DONE")
 
 
-        if st.button("🧪 ZIP TEST (ФАЙЛАМИ)"):
+        if st.button("🧪 ZIP TEST (АРХІВ)"):
         
             st.write("🚀 ZIP TEST старт")
-        
-            import zipfile
-            import io
-            import time
         
             zip_path = "pujancafinova.com.zip"
         
@@ -2173,70 +2199,43 @@ elif st.session_state.step == 2:
         
             st.write(f"✅ offer_id: {offer_id}")
         
-            # 🔹 2. читаємо ZIP
+            # 🔹 2. upload ZIP
             try:
+                import requests
+        
+                url = f"{st.secrets['KEITARO_URL']}/admin_api/v1/offers/{offer_id}/update_file"
+        
+                headers = {
+                    "Api-Key": st.secrets["KEITARO_API_KEY"]
+                }
+        
                 with open(zip_path, "rb") as f:
-                    zip_bytes = f.read()
+                    files = {
+                        "file": ("archive.zip", f, "application/zip")
+                    }
+        
+                    data = {
+                        "path": ""  # 🔥 КРИТИЧНО
+                    }
+        
+                    r = requests.put(
+                        url,
+                        headers=headers,
+                        files=files,
+                        data=data,
+                        verify=False
+                    )
+        
+                st.write("ZIP STATUS:", r.status_code)
+                st.write("ZIP RESPONSE:", r.text)
+        
+                if r.status_code == 200:
+                    st.success("🔥 ZIP upload done")
+                else:
+                    st.error("❌ ZIP fail")
+        
             except Exception as e:
-                st.error(f"❌ Не вдалося відкрити ZIP: {e}")
-                st.stop()
-        
-            z = zipfile.ZipFile(io.BytesIO(zip_bytes))
-            files = z.namelist()
-        
-            success = 0
-            total = 0
-        
-            for i, path in enumerate(files, 1):
-        
-                # ❌ пропускаємо папки
-                if path.endswith("/"):
-                    continue
-        
-                # 🔥 ФІКС №1: прибираємо кореневу папку
-                if "/" in path:
-                    path_clean = path.split("/", 1)[1]
-                else:
-                    path_clean = path
-        
-                # ❌ якщо після цього пусто — пропускаємо
-                if not path_clean:
-                    continue
-        
-                st.write(f"📤 {i} → {path_clean}")
-        
-                try:
-                    content = z.read(path)
-                except Exception as e:
-                    st.write(f"❌ READ FAIL {path}: {e}")
-                    continue
-        
-                total += 1
-        
-                # 🔥 retry
-                ok = False
-                for attempt in range(3):
-                    try:
-                        ensure_dir(offer_id, path_clean)
-                        ok = keitaro_upload_file_smart(offer_id, path_clean, content)
-                    except Exception as e:
-                        st.write(f"❌ EXCEPTION {path_clean}: {e}")
-                        ok = False
-        
-                    if ok:
-                        break
-        
-                    time.sleep(0.5)
-        
-                if ok:
-                    success += 1
-                else:
-                    st.write(f"❌ FAIL: {path_clean}")
-        
-                # 🔥 throttle (критично)
-                time.sleep(0.2)
-        
-            st.write(f"✅ Uploaded: {success}/{total}")
+                st.error(f"❌ ZIP upload exception: {e}")
 
             
     with right:
