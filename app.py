@@ -491,19 +491,27 @@ def keitaro_add_file(offer_id, path, file_bytes):
     url = f"{st.secrets['KEITARO_URL']}/admin_api/v1/offers/{offer_id}/add_file"
 
     headers = {
-        "Api-Key": st.secrets["KEITARO_API_KEY"],
-        "Content-Type": "application/octet-stream"
+        "Api-Key": st.secrets["KEITARO_API_KEY"]
     }
 
-    encoded = base64.b64encode(file_bytes)
+    params = {
+        "path": path
+    }
+
+    files = {
+        "data": base64.b64encode(file_bytes).decode()
+    }
 
     r = requests.post(
         url,
         headers=headers,
-        params={"path": path},   # 🔥 ВАЖЛИВО
-        data=encoded,           # 🔥 НЕ JSON
+        params=params,
+        files=files,   # 🔥 КЛЮЧ
         verify=False
     )
+
+    if r.status_code != 200:
+        st.write(f"❌ FAIL {path} → {r.status_code} {r.text}")
 
     return r.status_code == 200
 
