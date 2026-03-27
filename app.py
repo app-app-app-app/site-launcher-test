@@ -434,36 +434,25 @@ def keitaro_upload_file(offer_id, path, file_bytes):
     return r.status_code == 200
 
 
+import base64
+
 def keitaro_add_file(offer_id, path, content):
 
-    url = f"{st.secrets['KEITARO_URL']}/admin_api/v1/offers/{offer_id}/add_file"
+    url = f"{st.secrets['KEITARO_URL']}/admin_api/v1/offers/{offer_id}/update_file"
 
     headers = {
-        "Api-Key": st.secrets["KEITARO_API_KEY"]
+        "Api-Key": st.secrets["KEITARO_API_KEY"],
+        "Content-Type": "application/json"
     }
 
-    # 🔥 ВАЖЛИВО: content → STRING
-    if isinstance(content, bytes):
-        try:
-            content = content.decode("utf-8")
-        except:
-            content = content.decode("latin-1")  # fallback
+    encoded = base64.b64encode(content).decode()
 
-    files = {
-        "file": (path, content)
+    payload = {
+        "path": path,
+        "data": encoded
     }
 
-    data = {
-        "path": path
-    }
-
-    r = requests.post(
-        url,
-        headers=headers,
-        data=data,
-        files=files,   # 🔥 ОСЬ КЛЮЧ
-        verify=False
-    )
+    r = requests.put(url, headers=headers, json=payload, verify=False)
 
     st.write(f"UPLOAD {path}:", r.status_code, r.text)
 
