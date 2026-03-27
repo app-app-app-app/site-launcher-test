@@ -2025,8 +2025,8 @@ elif st.session_state.step == 2:
                 zip_bytes = st.session_state["generated_site_zips"].get(d)
                 
                 if not zip_bytes:
-                    if not zip_bytes:
-                    if not zip_bytes:
+                    st.warning(f"⚠️ {d} — нема ZIP, пропускаю upload але роблю campaign")
+                    upload_ok = False
                 else:
                     upload_ok = keitaro_upload_site_from_zip(offer_id, zip_bytes)
                 
