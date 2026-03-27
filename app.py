@@ -434,7 +434,7 @@ def keitaro_upload_file(offer_id, path, file_bytes):
     return r.status_code == 200
 
 
-def keitaro_add_file(offer_id, path, file_bytes):
+def keitaro_add_file(offer_id, path, content):
 
     url = f"{st.secrets['KEITARO_URL']}/admin_api/v1/offers/{offer_id}/add_file"
 
@@ -442,20 +442,30 @@ def keitaro_add_file(offer_id, path, file_bytes):
         "Api-Key": st.secrets["KEITARO_API_KEY"]
     }
 
+    # 🔥 ВАЖЛИВО: content → STRING
+    if isinstance(content, bytes):
+        try:
+            content = content.decode("utf-8")
+        except:
+            content = content.decode("latin-1")  # fallback
+
     files = {
-        "file": (path, file_bytes)   # 🔥 НЕ base64
+        "file": (path, content)
+    }
+
+    data = {
+        "path": path
     }
 
     r = requests.post(
         url,
         headers=headers,
-        params={"path": path},
-        files=files,
+        data=data,
+        files=files,   # 🔥 ОСЬ КЛЮЧ
         verify=False
     )
 
-    if r.status_code != 200:
-        st.write(f"❌ FAIL {path} → {r.status_code} {r.text}")
+    st.write(f"UPLOAD {path}:", r.status_code, r.text)
 
     return r.status_code == 200
 
@@ -497,18 +507,18 @@ def keitaro_upload_site_from_zip(offer_id, zip_bytes):
 
 def keitaro_delete_file(offer_id, path):
 
-    url = f"{st.secrets['KEITARO_URL']}/admin_api/v1/offers/{offer_id}/files"
+    url = f"{st.secrets['KEITARO_URL']}/admin_api/v1/offers/{offer_id}/remove_file"
 
     headers = {
-        "Api-Key": st.secrets["KEITARO_API_KEY"],
-        "Content-Type": "application/json"
+        "Api-Key": st.secrets["KEITARO_API_KEY"]
     }
 
-    payload = {
-        "path": path
-    }
-
-    r = requests.delete(url, headers=headers, json=payload, verify=False)
+    r = requests.delete(
+        url,
+        headers=headers,
+        params={"path": path},   # 🔥 ВАЖЛИВО: query param
+        verify=False
+    )
 
     st.write(f"🗑 DELETE {path}:", r.status_code, r.text)
 
@@ -2029,8 +2039,6 @@ elif st.session_state.step == 2:
                     upload_ok = False
                 else:
                     upload_ok = keitaro_upload_site_from_zip(offer_id, zip_bytes)
-                
-                ok = keitaro_upload_site_from_zip(offer_id, zip_bytes)
                 
                 if not ok:
                     st.error(f"❌ {d} — upload fail")
