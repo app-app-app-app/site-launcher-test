@@ -488,27 +488,21 @@ def keitaro_upload_file(offer_id, path, file_bytes):
 
 def keitaro_add_file(offer_id, path, file_bytes):
 
-    import base64
-
     url = f"{st.secrets['KEITARO_URL']}/admin_api/v1/offers/{offer_id}/add_file"
 
     headers = {
         "Api-Key": st.secrets["KEITARO_API_KEY"]
     }
 
-    params = {
-        "path": path
-    }
-
     files = {
-        "data": ("file", file_bytes)
+        "file": (path, file_bytes)   # 🔥 НЕ base64
     }
 
     r = requests.post(
         url,
         headers=headers,
-        params=params,
-        files=files,   # 🔥 КЛЮЧ
+        params={"path": path},
+        files=files,
         verify=False
     )
 
