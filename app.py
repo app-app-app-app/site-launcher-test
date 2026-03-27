@@ -359,7 +359,8 @@ def keitaro_create_offer(domain):
     data = {
         "name": domain,
         "group_id": 3,
-        "offer_type": "local"
+        "offer_type": "local",
+        keitaro_create_offer
     }
 
     r = requests.post(url, json=data, headers=headers, verify=False)
@@ -656,8 +657,7 @@ def keitaro_update_stream(stream_id, offer_id):
                 "offer_id": offer_id,   # 🔥 НЕ id
                 "position": 1,
                 "weight": 100,
-                "state": "active",
-                "landing_page_id": lp_id
+                "state": "active"
             }
         ]
     }
