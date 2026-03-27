@@ -409,16 +409,6 @@ def keitaro_create_campaign(domain):
 
 
 
-def keitaro_clear_offer(offer_id):
-    url = f"{st.secrets['KEITARO_URL']}/admin_api/v1/offers/{offer_id}/files"
-
-    headers = {
-        "Api-Key": st.secrets["KEITARO_API_KEY"]
-    }
-
-    r = requests.delete(url, headers=headers, verify=False)
-
-    st.write("🧹 CLEAR:", r.status_code, r.text)
 
 
 import base64
@@ -2001,10 +1991,8 @@ elif st.session_state.step == 2:
                     st.error(f"❌ {d} — не отримали offer_id")
                     continue
                 
-                # 🔥 1. ЧИСТИМО ОФЕР
-                keitaro_clear_offer(offer_id)
                 
-                # 🔥 2. ЗАЛИВАЄМО САЙТ
+                # 🔥 1. ЗАЛИВАЄМО САЙТ
                 zip_bytes = st.session_state["generated_site_zips"].get(d)
                 
                 if not zip_bytes:
