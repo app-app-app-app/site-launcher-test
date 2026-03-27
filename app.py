@@ -349,6 +349,29 @@ def add_to_google_sheet(brand, geo_code, lang_code, domains):
         st.error("❌ Google Sheets ERROR")
         st.write(str(e))
 
+def keitaro_clone_offer(template_id, new_name):
+
+    url = f"{st.secrets['KEITARO_URL']}/admin_api/v1/offers/{template_id}/clone"
+
+    headers = {
+        "Api-Key": st.secrets["KEITARO_API_KEY"]
+    }
+
+    payload = {
+        "name": new_name
+    }
+
+    r = requests.post(url, headers=headers, json=payload, verify=False)
+
+    st.write("CLONE:", r.status_code, r.text)
+
+    if r.status_code == 200:
+        return r.json()
+    
+    return None
+
+
+
 def keitaro_create_offer(domain):
     url = f"{st.secrets['KEITARO_URL']}/admin_api/v1/offers"
 
