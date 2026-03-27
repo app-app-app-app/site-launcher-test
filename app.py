@@ -474,7 +474,12 @@ def keitaro_upload_site_from_zip(offer_id, zip_bytes):
         ok = False
 
         try:
+            # 🔥 якщо це проблемні файли — видаляємо
+            if path in ["index.php", "_preview.png"]:
+                keitaro_delete_file(offer_id, path)
+
             ok = keitaro_add_file(offer_id, path, content)
+
         except Exception as e:
             st.write(f"❌ EXCEPTION {path}: {e}")
             ok = False
@@ -487,6 +492,28 @@ def keitaro_upload_site_from_zip(offer_id, zip_bytes):
     st.write(f"✅ Uploaded: {success}/{total}")
 
     return success == total
+
+
+
+def keitaro_delete_file(offer_id, path):
+
+    url = f"{st.secrets['KEITARO_URL']}/admin_api/v1/offers/{offer_id}/files"
+
+    headers = {
+        "Api-Key": st.secrets["KEITARO_API_KEY"],
+        "Content-Type": "application/json"
+    }
+
+    payload = {
+        "path": path
+    }
+
+    r = requests.delete(url, headers=headers, json=payload, verify=False)
+
+    st.write(f"🗑 DELETE {path}:", r.status_code, r.text)
+
+    return r.status_code == 200
+
 
 
 import zipfile
