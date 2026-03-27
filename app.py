@@ -467,7 +467,6 @@ def keitaro_upload_file_smart(offer_id, path, content):
         "Content-Type": "application/json"
     }
 
-    # 🔥 ОБОВʼЯЗКОВО: base64
     encoded = base64.b64encode(content).decode()
 
     payload = {
@@ -475,28 +474,28 @@ def keitaro_upload_file_smart(offer_id, path, content):
         "data": encoded
     }
 
-    # 1. пробуємо створити
+    # 🔥 КЛЮЧ
+    if "/" in path:
+        r = requests.put(url_update, headers=headers, json=payload, verify=False)
+
+        if r.status_code == 200:
+            return True
+
+        st.write(f"❌ UPDATE FAIL {path}: {r.status_code} {r.text}")
+        return False
+
+    # 🔹 тільки root файли через add
     r = requests.post(url_add, headers=headers, json=payload, verify=False)
 
     if r.status_code == 200:
         return True
 
-    # 2. якщо вже існує → оновлюємо
-    if r.status_code == 422 or "exists" in r.text:
-
+    if r.status_code == 422:
         r2 = requests.put(url_update, headers=headers, json=payload, verify=False)
-
-        if r2.status_code == 200:
-            return True
-        else:
-            st.write(f"❌ UPDATE FAIL {path}: {r2.status_code} {r2.text}")
-            return False
+        return r2.status_code == 200
 
     st.write(f"❌ ADD FAIL {path}: {r.status_code} {r.text}")
     return False
-
-
-import requests
 
 def keitaro_upload_zip_direct(offer_id, zip_path):
 
