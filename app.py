@@ -436,6 +436,51 @@ def keitaro_upload_file(offer_id, path, file_bytes):
 
 import base64
 
+import base64
+import requests
+
+def keitaro_upload_file_smart(offer_id, path, content):
+
+    base_url = st.secrets['KEITARO_URL']
+    api_key = st.secrets["KEITARO_API_KEY"]
+
+    url_add = f"{base_url}/admin_api/v1/offers/{offer_id}/add_file"
+    url_update = f"{base_url}/admin_api/v1/offers/{offer_id}/update_file"
+
+    headers = {
+        "Api-Key": api_key,
+        "Content-Type": "application/json"
+    }
+
+    # 🔥 ОБОВʼЯЗКОВО: base64
+    encoded = base64.b64encode(content).decode()
+
+    payload = {
+        "path": path,
+        "data": encoded
+    }
+
+    # 1. пробуємо створити
+    r = requests.post(url_add, headers=headers, json=payload, verify=False)
+
+    if r.status_code == 200:
+        return True
+
+    # 2. якщо вже існує → оновлюємо
+    if r.status_code == 422 or "exists" in r.text:
+
+        r2 = requests.put(url_update, headers=headers, json=payload, verify=False)
+
+        if r2.status_code == 200:
+            return True
+        else:
+            st.write(f"❌ UPDATE FAIL {path}: {r2.status_code} {r2.text}")
+            return False
+
+    st.write(f"❌ ADD FAIL {path}: {r.status_code} {r.text}")
+    return False
+
+
 def keitaro_add_file(offer_id, path, content):
 
     url = f"{st.secrets['KEITARO_URL']}/admin_api/v1/offers/{offer_id}/update_file"
@@ -477,7 +522,7 @@ def keitaro_upload_site_from_zip(offer_id, zip_bytes):
             if path in ["index.php", "_preview.png"]:
                 keitaro_delete_file(offer_id, path)
 
-            ok = keitaro_add_file(offer_id, path, content)
+            ok = keitaro_upload_file_smart(offer_id, path, content)
 
         except Exception as e:
             st.write(f"❌ EXCEPTION {path}: {e}")
