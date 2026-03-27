@@ -480,13 +480,23 @@ def keitaro_upload_site_from_zip(offer_id, zip_bytes):
 
         st.write(f"📤 {i}/{total} → {path}")
 
-        if not ok:
-            ok = keitaro_upload_file(offer_id, path, content)
+        # 🔥 ЗАВЖДИ ініціалізуємо ok
+        ok = False
+
+        try:
+            ok = keitaro_add_file(offer_id, path, content)
+        except Exception as e:
+            st.write(f"❌ EXCEPTION {path}: {e}")
+            ok = False
+
+        if ok:
+            success += 1
+        else:
+            st.write(f"❌ FAIL: {path}")
 
     st.write(f"✅ Uploaded: {success}/{total}")
 
     return success == total
-
 
 
 import zipfile
