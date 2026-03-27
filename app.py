@@ -1991,23 +1991,6 @@ elif st.session_state.step == 2:
             use_container_width=True,
             on_click=step2_continue,
         )
-        if st.button("🚀 TEST SHEETS", use_container_width=True):
-        
-            st.write("🚀 DEBUG: кнопка натиснута")
-        
-            if len(st.session_state.chosen_domains) == 0:
-                st.error("❌ Нема доменів")
-            else:
-                st.write("DEBUG: викликаю add_to_google_sheet")
-        
-                add_to_google_sheet(
-                    brand=st.session_state.get("brand"),
-                    geo_code=st.session_state.get("geo_code"),
-                    lang_code=st.session_state.get("target_lang"),
-                    domains=st.session_state.get("chosen_domains")
-                )
-        
-                st.success("✅ TEST DONE")
         
 
         if st.button("🚀 FULL LAUNCH", use_container_width=True):
@@ -2150,6 +2133,35 @@ elif st.session_state.step == 2:
                 st.write(f"✅ {d}")
         
             st.success("🔥 FULL LAUNCH DONE")
+
+
+        if st.button("🧪 ZIP TEST (БЕЗ ГЕНЕРАЦІЇ)"):
+        
+            st.write("🚀 ZIP TEST старт")
+        
+            test_domain = "test-zip.com"
+        
+            # 1. створюємо офер
+            offer = keitaro_create_offer(test_domain)
+        
+            offer_id = offer.get("id")
+        
+            if not offer_id:
+                st.error("❌ offer не створився")
+                st.stop()
+        
+            st.write(f"✅ offer_id: {offer_id}")
+        
+            # 2. ЗАЛИВАЄМО ГОТОВИЙ ZIP
+            ok = keitaro_upload_zip_direct(
+                offer_id,
+                "pujancafinova.com.zip"
+            )
+        
+            if ok:
+                st.success("🔥 ZIP upload done")
+            else:
+                st.error("❌ ZIP fail")
 
 
     with right:
