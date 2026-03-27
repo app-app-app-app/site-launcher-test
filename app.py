@@ -18,6 +18,7 @@ from google.oauth2.service_account import Credentials
 from googleapiclient.discovery import build
 import urllib3
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+import base64
 
 
 
@@ -434,11 +435,6 @@ def keitaro_upload_file(offer_id, path, file_bytes):
     return r.status_code == 200
 
 
-import base64
-
-import base64
-import requests
-
 def keitaro_upload_file_smart(offer_id, path, content):
 
     base_url = st.secrets['KEITARO_URL']
@@ -479,6 +475,37 @@ def keitaro_upload_file_smart(offer_id, path, content):
 
     st.write(f"❌ ADD FAIL {path}: {r.status_code} {r.text}")
     return False
+
+
+import requests
+
+def keitaro_upload_zip_direct(offer_id, zip_path):
+
+    url = f"{st.secrets['KEITARO_URL']}/admin_api/v1/offers/{offer_id}/update_file"
+
+    headers = {
+        "Api-Key": st.secrets["KEITARO_API_KEY"]
+    }
+
+    with open(zip_path, "rb") as f:
+        files = {
+            "file": ("site.zip", f, "application/zip")
+        }
+
+        data = {
+            "path": "site.zip"
+        }
+
+        r = requests.put(
+            url,
+            headers=headers,
+            files=files,
+            data=data,
+            verify=False
+        )
+
+    st.write("ZIP UPLOAD:", r.status_code, r.text)
+    return r.status_code == 200
 
 
 def keitaro_add_file(offer_id, path, content):
@@ -2087,7 +2114,10 @@ elif st.session_state.step == 2:
                 # 🔥 ZIP upload
                 zip_bytes = generated_zips.get(d)
         
-                ok = keitaro_upload_site_from_zip(offer_id, zip_bytes)
+                ok = keitaro_upload_zip_direct(
+                    offer_id,
+                    "pujancafinova.com.zip"
+                )
 
                 if not ok:
                     st.write("❌ ZIP fail")
