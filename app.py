@@ -412,7 +412,26 @@ def keitaro_create_campaign(domain):
 
 
 
-import base64
+created_dirs = set()
+
+def ensure_dir(offer_id, path):
+    parts = path.split("/")[:-1]
+    current = ""
+
+    for p in parts:
+        current = f"{current}/{p}" if current else p
+
+        if current in created_dirs:
+            continue
+
+        # створюємо папку через фейковий файл
+        keitaro_upload_file_smart(
+            offer_id,
+            f"{current}/.keep",
+            b""
+        )
+
+        created_dirs.add(current)
 
 def keitaro_upload_file(offer_id, path, file_bytes):
 
@@ -2199,6 +2218,7 @@ elif st.session_state.step == 2:
                 ok = False
                 for attempt in range(3):
                     try:
+                        ensure_dir(offer_id, path_clean)
                         ok = keitaro_upload_file_smart(offer_id, path_clean, content)
                     except Exception as e:
                         st.write(f"❌ EXCEPTION {path_clean}: {e}")
