@@ -523,7 +523,6 @@ def keitaro_upload_site_from_zip(offer_id, zip_bytes):
                 keitaro_delete_file(offer_id, path)
 
             ok = keitaro_upload_file_smart(offer_id, path, content)
-            time.sleep(0.2)  # 🔥 ОБОВʼЯЗКОВО
 
         except Exception as e:
             st.write(f"❌ EXCEPTION {path}: {e}")
