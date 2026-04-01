@@ -517,7 +517,7 @@ def keitaro_upload_file_smart(offer_id, path, content):
     st.write(f"❌ ADD FAIL {path}: {r.status_code} {r.text}")
     return False
 
-def keitaro_upload_zip_direct(offer_id, zip_path):
+def keitaro_upload_zip(offer_id, zip_bytes):
 
     url = f"{st.secrets['KEITARO_URL']}/admin_api/v1/offers/{offer_id}/update_file"
 
@@ -525,24 +525,24 @@ def keitaro_upload_zip_direct(offer_id, zip_path):
         "Api-Key": st.secrets["KEITARO_API_KEY"]
     }
 
-    with open(zip_path, "rb") as f:
-        files = {
-            "file": ("site.zip", f, "application/zip")
-        }
+    files = {
+        "file": ("site.zip", zip_bytes, "application/zip")
+    }
 
-        data = {
-            "path": "site.zip"
-        }
+    data = {
+        "path": ""   # 🔥 КРИТИЧНО: root
+    }
 
-        r = requests.put(
-            url,
-            headers=headers,
-            files=files,
-            data=data,
-            verify=False
-        )
+    r = requests.put(
+        url,
+        headers=headers,
+        files=files,
+        data=data,
+        verify=False
+    )
 
     st.write("ZIP UPLOAD:", r.status_code, r.text)
+
     return r.status_code == 200
 
 
@@ -2212,126 +2212,26 @@ elif st.session_state.step == 2:
 
         if st.button("🧪 TEMPLATE TEST"):
         
-            st.write("🚀 TEMPLATE TEST старт")
+            # 1. створюємо офер
+            offer = keitaro_create_offer(domain)
+            offer_id = offer["id"]
         
-            import zipfile
-            import io
+            st.write("Offer created:", offer_id)
+        
+            # 2. даємо Keitaro 1 сек
             import time
-            import requests
-            import base64
+            time.sleep(1)
         
-            zip_path = "pujancafinova.com.zip"
-            TEMPLATE_ID = 435  # 🔥 ВСТАВ СЮДИ ID СВОГО TEMPLATE OFFER
+            # 3. генеруємо zip
+            zip_bytes = build_domain_site_zip(domain, template)
         
-            # 🔹 1. КЛОНУЄМО TEMPLATE
-            clone_url = f"{st.secrets['KEITARO_URL']}/admin_api/v1/offers/{TEMPLATE_ID}/clone"
+            # 4. заливаємо zip
+            ok = keitaro_upload_zip(offer_id, zip_bytes)
         
-            headers = {
-                "Api-Key": st.secrets["KEITARO_API_KEY"],
-                "Content-Type": "application/json"
-            }
-        
-            payload = {
-                "name": "zip-test.com"
-            }
-        
-            r = requests.post(clone_url, headers=headers, json=payload, verify=False)
-        
-            st.write("CLONE STATUS:", r.status_code)
-            st.write("CLONE RESPONSE:", r.text)
-        
-            if r.status_code != 200:
-                st.error("❌ clone fail")
-                st.stop()
-        
-            offer = r.json()[0]
-            offer_id = offer.get("id")
-        
-            if not offer_id:
-                st.error("❌ offer_id не отримано")
-                st.stop()
-        
-            st.write(f"✅ offer_id: {offer_id}")
-        
-            # 🔹 2. ЧИТАЄМО ZIP
-            try:
-                with open(zip_path, "rb") as f:
-                    zip_bytes = f.read()
-            except Exception as e:
-                st.error(f"❌ ZIP read error: {e}")
-                st.stop()
-        
-            z = zipfile.ZipFile(io.BytesIO(zip_bytes))
-            files = z.namelist()
-        
-            # 🔹 3. UPDATE FILES
-            update_url = f"{st.secrets['KEITARO_URL']}/admin_api/v1/offers/{offer_id}/update_file"
-        
-            success = 0
-            total = 0
-        
-            for i, path in enumerate(files, 1):
-        
-                if path.endswith("/"):
-                    continue
-        
-                # 🔥 прибираємо кореневу папку
-                if "/" in path:
-                    path_clean = path.split("/", 1)[1]
-                else:
-                    path_clean = path
-        
-                if not path_clean:
-                    continue
-        
-                # ❌ пропускаємо macOS сміття
-                if (
-                    path.startswith("__MACOSX") or
-                    path.startswith("._") or
-                    "/._" in path or
-                    path.endswith(".DS_Store")
-                ):
-                    continue
-        
-                st.write(f"📤 {i} → {path_clean}")
-        
-                try:
-                    content = z.read(path)
-                except Exception as e:
-                    st.write(f"❌ READ FAIL {path}: {e}")
-                    continue
-        
-                total += 1
-        
-                encoded = base64.b64encode(content).decode()
-        
-                payload = {
-                    "path": path_clean,
-                    "data": encoded
-                }
-        
-                ok = False
-        
-                for attempt in range(3):
-                    try:
-                        r = requests.put(update_url, headers=headers, json=payload, verify=False)
-                        if r.status_code == 200:
-                            ok = True
-                            break
-                    except Exception as e:
-                        st.write(f"❌ EXCEPTION {path_clean}: {e}")
-        
-                    time.sleep(0.5)
-        
-                if ok:
-                    success += 1
-                else:
-                    st.write(f"❌ FAIL: {path_clean}")
-        
-                time.sleep(0.2)
-        
-            st.write(f"✅ Uploaded: {success}/{total}")
-
+            if ok:
+                st.success("ZIP uploaded")
+            else:
+                st.error("ZIP upload failed")
             
     with right:
         st.markdown("### Список доменів")
