@@ -1593,7 +1593,7 @@ elif st.session_state.step == 2:
 # ---------------------------
 elif st.session_state.step == 3:
     st.subheader("Крок 3 — Генерація `lang.php` + таски")
-        add_to_google_sheet({
+    add_to_google_sheet({
         "brand": st.session_state.brand,
         "geo": st.session_state.geo_code,
         "lang": st.session_state.target_lang,
