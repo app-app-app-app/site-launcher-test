@@ -35,6 +35,8 @@ from core.config import Config, init_app, Monitor, handle_error
 
 
 # ---- Page config (must be before any st.* calls) ----
+TEMPLATE_ID = 373
+
 def _get_favicon():
     # Page icon in the browser tab (cheap status indicator).
     step = int(st.session_state.get("step", 1))
@@ -260,7 +262,7 @@ def init_state():
     st.session_state.setdefault("task_buy_index", "ДА")  # ДА/НІ
 
     # step3 generated files
-    st.session_state.setdefault("generated_files", [])
+    st.session_state.setdefault("generated_files", {})
 
     st.session_state.setdefault("step2_autocheck_done", False)
     st.session_state.setdefault("step3_autogen_done", False)
@@ -1620,11 +1622,19 @@ elif st.session_state.step == 2:
                 domains=st.session_state.chosen_domains
             )
         if st.button("🚀 LAUNCH"):
+            if not st.session_state.get("generated_files"):
+                st.error("❌ Спочатку згенеруй lang.php (Step 3)")
+                st.stop()
             for domain in domains:
                 zip_bytes = build_domain_site_zip(
                     domain=domain,
-                    site_template_dir=...,
-                    lang_php_content=generated[domain],
+                    tpl_id = st.session_state.get("domain_templates", {}).get(domain, "template_1")
+                    site_template_dir = TEMPLATES[tpl_id]["dir"]
+                    generated_files = st.session_state.get("generated_files", {})
+                    if domain not in generated_files:
+                        st.error(f"❌ Немає lang.php для {domain}")
+                        continue
+                    lang_php_content = generated_files[domain]
                     target_lang=target_lang,
                     geo_code=geo_code,
                     brand=brand
