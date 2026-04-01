@@ -1622,19 +1622,29 @@ elif st.session_state.step == 2:
                 domains=st.session_state.chosen_domains
             )
         if st.button("🚀 LAUNCH"):
+        
             if not st.session_state.get("generated_files"):
                 st.error("❌ Спочатку згенеруй lang.php (Step 3)")
                 st.stop()
+        
+            domains = st.session_state.get("chosen_domains") or []
+            generated_files = st.session_state.get("generated_files", {})
+        
             for domain in domains:
+        
+                if domain not in generated_files:
+                    st.error(f"❌ Немає lang.php для {domain}")
+                    continue
+        
+                lang_php_content = generated_files[domain]
+        
+                tpl_id = st.session_state.get("domain_templates", {}).get(domain, "template_1")
+                site_template_dir = TEMPLATES[tpl_id]["dir"]
+        
                 zip_bytes = build_domain_site_zip(
                     domain=domain,
-                    tpl_id = st.session_state.get("domain_templates", {}).get(domain, "template_1"),
-                    site_template_dir = TEMPLATES[tpl_id]["dir"],
-                    generated_files = st.session_state.get("generated_files", {})
-                    if domain not in generated_files:
-                        st.error(f"❌ Немає lang.php для {domain}")
-                        continue
-                    lang_php_content = generated_files[domain]
+                    site_template_dir=site_template_dir,
+                    lang_php_content=lang_php_content,
                     target_lang=target_lang,
                     geo_code=geo_code,
                     brand=brand
