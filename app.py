@@ -15,9 +15,6 @@ from typing import Optional
 from core.review_pipeline import generate_review
 from core.sheets import add_to_google_sheet
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
-
-
-
 from core.options import build_geo_labels, build_language_labels, bcp47_from, TOP_GEO_ORDER
 from core.geo_detect import detect_geo_lang
 from core.domain_suggest import generate_domain_candidates
