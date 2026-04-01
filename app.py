@@ -2063,10 +2063,10 @@ elif st.session_state.step == 2:
 
         if st.button("🧪 Тест Google Sheets"):
             add_to_google_sheet(
-                brand="TEST",
-                geo_code="HU",
-                lang_code="hu",
-                domains=["testdomain.com"]
+                brand=st.session_state.brand,
+                geo_code=st.session_state.geo_code,
+                lang_code=st.session_state.target_lang,
+                domains=st.session_state.chosen_domains
             )
         if st.button("🚀 FULL LAUNCH", use_container_width=True):
         
