@@ -13,14 +13,13 @@ import zipfile
 from pathlib import Path
 from typing import Optional
 from core.review_pipeline import generate_review
-from core.sheets import add_to_google_sheet
-sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 from core.options import build_geo_labels, build_language_labels, bcp47_from, TOP_GEO_ORDER
 from core.geo_detect import detect_geo_lang
 from core.domain_suggest import generate_domain_candidates
 from core.domain_check import check_domains_rdap
 from core.lang_pipeline import generate_lang_files_multi
 from core.domains import get_domain_candidates, check_domains
+from core.sheets import add_to_google_sheet
 
 
 # ---- Page config (must be before any st.* calls) ----
