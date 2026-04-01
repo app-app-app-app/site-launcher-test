@@ -15,7 +15,7 @@ from typing import Dict, List, Optional, Tuple
 from dataclasses import dataclass
 import logging
 
-from keitaro_api import KeitaroClient, upload_zip_to_offer, KeitaroAPIError
+from core.keitaro_api import KeitaroClient, upload_zip_to_offer, KeitaroAPIError
 
 # Setup logging
 logging.basicConfig(level=logging.INFO)
