@@ -286,8 +286,7 @@ def add_to_google_sheet(brand, geo_code, lang_code, domains):
         from googleapiclient.discovery import build
         import datetime
 
-        # --- AUTH ---
-        creds_dict = dict(st.secrets["gcp"])  # 🔥 важливо
+        creds_dict = dict(st.secrets["gcp"])
 
         creds = Credentials.from_service_account_info(
             creds_dict,
@@ -296,20 +295,18 @@ def add_to_google_sheet(brand, geo_code, lang_code, domains):
 
         service = build("sheets", "v4", credentials=creds)
 
-        # --- CONFIG ---
         spreadsheet_id = st.secrets["GSHEET_ID"]
         sheet_name = st.secrets["GSHEET_NAME"]
 
-        # --- FIND NEXT ROW ---
+        # 🔍 шукаємо по колонці B (Дата)
         result = service.spreadsheets().values().get(
             spreadsheetId=spreadsheet_id,
-            range=f"{sheet_name}!C:C",
+            range=f"{sheet_name}!B:B",
         ).execute()
 
         values = result.get("values", [])
         next_row = len(values) + 1
 
-        # --- DATA ---
         today = datetime.datetime.now().strftime("%d.%m")
 
         geo_name = _geo_name_ua(geo_code)
@@ -325,18 +322,17 @@ def add_to_google_sheet(brand, geo_code, lang_code, domains):
             tpl_label = TEMPLATES.get(tpl_id, {}).get("label", tpl_id)
 
             rows.append([
-                today,
-                brand,
-                geo_name,
-                lang_name,
-                d,
-                tpl_label,
-                review_flag,
-                "",
-                "Автоматичне створення сайту",
+                today,          # B — Дата
+                brand,          # C — Бренд
+                geo_name,       # D — Гео
+                lang_name,      # E — Мова
+                d,              # F — Домен
+                tpl_label,      # G — Шаблон
+                review_flag,    # H — Ревʼю
+                "",             # I — Де знайдений
+                "Новий",        # J — Статус
             ])
 
-        # --- WRITE ---
         service.spreadsheets().values().update(
             spreadsheetId=spreadsheet_id,
             range=f"{sheet_name}!B{next_row}",
@@ -2065,6 +2061,13 @@ elif st.session_state.step == 2:
         )
         
 
+        if st.button("🧪 Тест Google Sheets"):
+            add_to_google_sheet(
+                brand="TEST",
+                geo_code="HU",
+                lang_code="hu",
+                domains=["testdomain.com"]
+            )
         if st.button("🚀 FULL LAUNCH", use_container_width=True):
         
             st.write("🚀 FULL LAUNCH старт")
