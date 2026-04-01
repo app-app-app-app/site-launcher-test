@@ -282,12 +282,12 @@ init_state()
 
 def add_to_google_sheet(brand, geo_code, lang_code, domains):
     try:
-        import datetime
         from google.oauth2.service_account import Credentials
         from googleapiclient.discovery import build
+        import datetime
 
-        # 🔥 беремо creds як dict (Streamlit сам парсить)
-        creds_dict = st.secrets["gcp"]
+        # --- AUTH ---
+        creds_dict = dict(st.secrets["gcp"])  # 🔥 важливо
 
         creds = Credentials.from_service_account_info(
             creds_dict,
@@ -296,10 +296,11 @@ def add_to_google_sheet(brand, geo_code, lang_code, domains):
 
         service = build("sheets", "v4", credentials=creds)
 
+        # --- CONFIG ---
         spreadsheet_id = st.secrets["GSHEET_ID"]
         sheet_name = st.secrets["GSHEET_NAME"]
 
-        # 🔥 шукаємо перший вільний рядок по колонці C
+        # --- FIND NEXT ROW ---
         result = service.spreadsheets().values().get(
             spreadsheetId=spreadsheet_id,
             range=f"{sheet_name}!C:C",
@@ -308,7 +309,7 @@ def add_to_google_sheet(brand, geo_code, lang_code, domains):
         values = result.get("values", [])
         next_row = len(values) + 1
 
-        # 🔥 формуємо дані
+        # --- DATA ---
         today = datetime.datetime.now().strftime("%d.%m")
 
         geo_name = _geo_name_ua(geo_code)
@@ -324,18 +325,18 @@ def add_to_google_sheet(brand, geo_code, lang_code, domains):
             tpl_label = TEMPLATES.get(tpl_id, {}).get("label", tpl_id)
 
             rows.append([
-                today,        # B
-                brand,        # C
-                geo_name,     # D
-                lang_name,    # E
-                d,            # F
-                tpl_label,    # G
-                review_flag,  # H
-                "",                                 # I (пропускаємо)
-                "Автоматичне створення сайту",      # J 🔥
+                today,
+                brand,
+                geo_name,
+                lang_name,
+                d,
+                tpl_label,
+                review_flag,
+                "",
+                "Автоматичне створення сайту",
             ])
 
-        # 🔥 запис
+        # --- WRITE ---
         service.spreadsheets().values().update(
             spreadsheetId=spreadsheet_id,
             range=f"{sheet_name}!B{next_row}",
@@ -343,12 +344,12 @@ def add_to_google_sheet(brand, geo_code, lang_code, domains):
             body={"values": rows},
         ).execute()
 
-        st.success(f"✅ Записано в рядок {next_row}")
+        st.success(f"✅ Записано в таблицю (рядок {next_row})")
 
     except Exception as e:
         st.error("❌ Google Sheets ERROR")
-        st.write(str(e))
-
+        st.code(str(e))
+        
 def keitaro_clone_offer(template_id, new_name):
 
     url = f"{st.secrets['KEITARO_URL']}/admin_api/v1/offers/{template_id}/clone"
