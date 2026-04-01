@@ -1,3 +1,4 @@
+import sys
 import os
 import json
 import urllib.parse
@@ -13,7 +14,7 @@ from pathlib import Path
 from typing import Optional
 from core.review_pipeline import generate_review
 from core.sheets import add_to_google_sheet
-
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
 
 
