@@ -345,72 +345,28 @@ def add_to_google_sheet(brand, geo_code, lang_code, domains):
     except Exception as e:
         st.error("❌ Google Sheets ERROR")
         st.code(str(e))
+        
+def keitaro_clone_offer(template_id, new_name):
 
-
-def keitaro_create_offer_and_upload_zip(domain, zip_bytes):
-
-    base_url = st.secrets['KEITARO_URL']
-    api_key = st.secrets["KEITARO_API_KEY"]
+    url = f"{st.secrets['KEITARO_URL']}/admin_api/v1/offers/{template_id}/clone"
 
     headers = {
-        "Api-Key": api_key
+        "Api-Key": st.secrets["KEITARO_API_KEY"]
     }
 
-    # 🔹 1. CREATE OFFER
-    url_create = f"{base_url}/admin_api/v1/offers"
-
-    data = {
-        "name": domain,
-        "group_id": 3,
-        "offer_type": "local",
-        "action_type": "local"
+    payload = {
+        "name": new_name
     }
 
-    r = requests.post(url_create, json=data, headers=headers, verify=False)
+    r = requests.post(url, headers=headers, json=payload, verify=False)
 
-    st.write("CREATE:", r.status_code, r.text)
+    st.write("CLONE:", r.status_code, r.text)
 
-    if r.status_code != 200:
-        raise Exception(f"CREATE FAIL: {r.text}")
+    if r.status_code == 200:
+        return r.json()
+    
+    return None
 
-    res = r.json()
-
-    # 🔥 FIX для list
-    offer = res[0] if isinstance(res, list) else res
-    offer_id = offer.get("id")
-
-    if not offer_id:
-        raise Exception(f"NO OFFER ID: {res}")
-
-    st.success(f"✅ offer_id: {offer_id}")
-
-    # 🔹 2. UPLOAD ZIP
-    url_upload = f"{base_url}/admin_api/v1/offers/{offer_id}/update_file"
-
-    files = {
-        "file": ("site.zip", zip_bytes, "application/zip")
-    }
-
-    data = {
-        "path": ""
-    }
-
-    r = requests.put(
-        url_upload,
-        headers=headers,
-        files=files,
-        data=data,
-        verify=False
-    )
-
-    st.write("ZIP:", r.status_code, r.text)
-
-    if r.status_code != 200:
-        raise Exception(f"ZIP FAIL: {r.text}")
-
-    st.success("🔥 ZIP UPLOADED")
-
-    return offer_id
 
 
 def keitaro_create_offer(domain):
@@ -590,6 +546,34 @@ def keitaro_upload_zip(offer_id, zip_bytes):
     return r.status_code == 200
 
 
+def keitaro_upload_zip(offer_id, zip_path):
+
+    url = f"{st.secrets['KEITARO_URL']}/admin_api/v1/offers/{offer_id}/update_file"
+
+    headers = {
+        "Api-Key": st.secrets["KEITARO_API_KEY"]
+    }
+
+    with open(zip_path, "rb") as f:
+        files = {
+            "file": ("archive.zip", f, "application/zip")
+        }
+
+        data = {
+            "path": ""   # 🔥 КРИТИЧНО
+        }
+
+        r = requests.put(
+            url,
+            headers=headers,
+            files=files,
+            data=data,
+            verify=False
+        )
+
+    st.write("ZIP:", r.status_code, r.text)
+    return r.status_code == 200
+
 
 
 def keitaro_add_file(offer_id, path, content):
@@ -695,6 +679,33 @@ def unzip_to_dict(zip_bytes):
 
 
 TEMPLATE_ID = 373
+def keitaro_clone_campaign(template_id, domain):
+    import time
+
+    url = f"{st.secrets['KEITARO_URL']}/admin_api/v1/campaigns/{template_id}/clone"
+
+    headers = {
+        "Api-Key": st.secrets["KEITARO_API_KEY"],
+        "Content-Type": "application/json"
+    }
+
+    alias = domain.replace(".", "-") + "-" + str(int(time.time()))
+
+    data = {
+        "name": domain,
+        "alias": alias,
+        "group_id": 2
+    }
+
+    r = requests.post(url, json=data, headers=headers, verify=False)
+
+    st.write("CLONE STATUS:", r.status_code)
+    st.write("CLONE RAW:", r.text)
+
+    try:
+        return r.json()
+    except:
+        return {"error": r.text}
 
 
 def keitaro_update_campaign_meta(campaign_id, domain):
@@ -2170,6 +2181,8 @@ elif st.session_state.step == 2:
                     st.write("❌ ZIP fail")
                     continue
         
+
+                campaign = keitaro_clone_campaign(TEMPLATE_ID, d)
         
                 if isinstance(campaign, list):
                     campaign_id = campaign[0].get("id")
@@ -2197,24 +2210,9 @@ elif st.session_state.step == 2:
             st.success("🔥 FULL LAUNCH DONE")
 
 
-        if st.button("🚀 ZIP TEST CLEAN"):
-        
-            domain = "testzip123.com"
-        
-            with open("pujancafinova.com.zip", "rb") as f:
-                zip_bytes = f.read()
-        
-            keitaro_create_offer_and_upload_zip(domain, zip_bytes)
-        
         if st.button("🧪 TEMPLATE TEST"):
         
             # 1. створюємо офер
-            offer = keitaro_create_offer(domain)
-
-            if not offer or "id" not in offer:
-                st.error(f"❌ offer create fail: {offer}")
-                st.stop()
-
             offer_id = offer["id"]
         
             st.write("Offer created:", offer_id)
