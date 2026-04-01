@@ -347,6 +347,72 @@ def add_to_google_sheet(brand, geo_code, lang_code, domains):
         st.code(str(e))
 
 
+def keitaro_create_offer_and_upload_zip(domain, zip_bytes):
+
+    base_url = st.secrets['KEITARO_URL']
+    api_key = st.secrets["KEITARO_API_KEY"]
+
+    headers = {
+        "Api-Key": api_key
+    }
+
+    # 🔹 1. CREATE OFFER
+    url_create = f"{base_url}/admin_api/v1/offers"
+
+    data = {
+        "name": domain,
+        "group_id": 3,
+        "offer_type": "local",
+        "action_type": "local"
+    }
+
+    r = requests.post(url_create, json=data, headers=headers, verify=False)
+
+    st.write("CREATE:", r.status_code, r.text)
+
+    if r.status_code != 200:
+        raise Exception(f"CREATE FAIL: {r.text}")
+
+    res = r.json()
+
+    # 🔥 FIX для list
+    offer = res[0] if isinstance(res, list) else res
+    offer_id = offer.get("id")
+
+    if not offer_id:
+        raise Exception(f"NO OFFER ID: {res}")
+
+    st.success(f"✅ offer_id: {offer_id}")
+
+    # 🔹 2. UPLOAD ZIP
+    url_upload = f"{base_url}/admin_api/v1/offers/{offer_id}/update_file"
+
+    files = {
+        "file": ("site.zip", zip_bytes, "application/zip")
+    }
+
+    data = {
+        "path": ""
+    }
+
+    r = requests.put(
+        url_upload,
+        headers=headers,
+        files=files,
+        data=data,
+        verify=False
+    )
+
+    st.write("ZIP:", r.status_code, r.text)
+
+    if r.status_code != 200:
+        raise Exception(f"ZIP FAIL: {r.text}")
+
+    st.success("🔥 ZIP UPLOADED")
+
+    return offer_id
+
+
 def keitaro_create_offer(domain):
     url = f"{st.secrets['KEITARO_URL']}/admin_api/v1/offers"
 
@@ -2131,6 +2197,15 @@ elif st.session_state.step == 2:
             st.success("🔥 FULL LAUNCH DONE")
 
 
+        if st.button("🚀 ZIP TEST CLEAN"):
+        
+            domain = "testzip123.com"
+        
+            with open("pujancafinova.com.zip", "rb") as f:
+                zip_bytes = f.read()
+        
+            keitaro_create_offer_and_upload_zip(domain, zip_bytes)
+        
         if st.button("🧪 TEMPLATE TEST"):
         
             # 1. створюємо офер
