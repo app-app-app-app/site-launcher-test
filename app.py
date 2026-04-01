@@ -2213,7 +2213,6 @@ elif st.session_state.step == 2:
         if st.button("🧪 TEMPLATE TEST"):
         
             # 1. створюємо офер
-            offer = keitaro_create_offer(domain)
             offer_id = offer["id"]
         
             st.write("Offer created:", offer_id)
