@@ -1629,7 +1629,7 @@ elif st.session_state.step == 2:
                 zip_bytes = build_domain_site_zip(
                     domain=domain,
                     tpl_id = st.session_state.get("domain_templates", {}).get(domain, "template_1"),
-                    site_template_dir = TEMPLATES[tpl_id]["dir"]
+                    site_template_dir = TEMPLATES[tpl_id]["dir"],
                     generated_files = st.session_state.get("generated_files", {})
                     if domain not in generated_files:
                         st.error(f"❌ Немає lang.php для {domain}")
