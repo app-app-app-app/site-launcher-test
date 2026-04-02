@@ -298,40 +298,99 @@ init_state()
 
 
 def launch_site_wrapper(domain, zip_bytes):
-    client = init_keitaro()
-
+    """
+    ВИПРАВЛЕНА версія з правильним обробленням помилок та Google Sheets
+    """
+    # ✅ ШАГ 1: ПЕРЕВІРКА ZIP
+    if not zip_bytes:
+        st.error(f"❌ {domain}: ZIP порожній!")
+        return
+    
+    if len(zip_bytes) < 100:
+        st.error(f"❌ {domain}: ZIP занадто малий ({len(zip_bytes)} байт)")
+        return
+    
+    # ✅ ШАГ 2: ПЕРЕВІРКА ZIP структури
+    try:
+        import zipfile
+        z = zipfile.ZipFile(io.BytesIO(zip_bytes))
+        files = z.namelist()
+        
+        if not files:
+            st.error(f"❌ {domain}: ZIP порожній (немає файлів)")
+            return
+        
+        has_index = any('index.html' in f or 'index.php' in f for f in files)
+        if not has_index:
+            st.warning(f"⚠️  {domain}: ZIP не має index.html/index.php")
+        
+        st.write(f"✅ ZIP OK ({len(files)} файлів, {len(zip_bytes)/1024:.1f} KB)")
+    
+    except zipfile.BadZipFile as e:
+        st.error(f"❌ {domain}: ZIP пошкоджений: {e}")
+        return
+    except Exception as e:
+        st.error(f"❌ {domain}: Помилка перевірки ZIP: {e}")
+        return
+    
+    # ✅ ШАГ 3: ІНІЦІАЛІЗАЦІЯ КЛІЄНТІВ
+    try:
+        client = init_keitaro()
+        sheets = init_google_sheets()  # ← ДОДАЙ цю функцію!
+        
+        if not client:
+            st.error("❌ Keitaro не ініціалізований")
+            return
+    
+    except Exception as e:
+        st.error(f"❌ Помилка ініціалізації: {e}")
+        return
+    
+    # ✅ ШАГ 4: СТВОРЕННЯ PIPELINE
     pipeline = SiteLaunchPipeline(
-        keitaro_client=client
+        keitaro_client=client,
+        google_sheets_manager=sheets  # ← ДОДАЙ sheets!
     )
-
+    
+    # ✅ ШАГ 5: ЗАПУСК З LOGGING
     progress_bar = st.progress(0)
     status = st.empty()
-
+    
     def on_progress(percent, message):
         progress_bar.progress(percent / 100)
         status.info(message)
-
+    
+    # ✅ ШАГ 6: СПРОБУЙ ЗАПУСТИТИ
     try:
+        on_progress(0, f"🚀 Запускаю {domain}...")
+        
         result = pipeline.launch_site(
             brand=st.session_state.get("brand"),
             domain=domain,
             geo_code=st.session_state.get("geo_code"),
             lang_code=st.session_state.get("target_lang"),
             zip_bytes=zip_bytes,
-            template_campaign_id=TEMPLATE_ID,
+            template_campaign_id=TEMPLATE_ID,  # 373
             progress_callback=on_progress
         )
-
+        
+        on_progress(100, f"✅ Готово!")
+        
+        # ✅ ШАГ 7: РЕЗУЛЬТАТ
         if result["success"]:
-            st.success(f"✅ Launch OK | Offer: {result['offer_id']}")
+            st.success(f"✅ {domain} запущений!")
+            st.write(f"  • Offer ID: {result['offer_id']}")
+            st.write(f"  • Campaign ID: {result['campaign_id']}")
+        
         else:
-            st.error("❌ Launch failed")
-            for e in result["errors"]:
-                st.write(f"• {e}")
-
+            st.error(f"❌ {domain} не запустився")
+            for error in result.get("errors", []):
+                st.write(f"  • {error}")
+    
     except Exception as e:
-        st.error(f"❌ Error: {e}")
-
+        st.error(f"❌ {domain}: Критична помилка: {e}")
+        import traceback
+        st.write(traceback.format_exc())
 
 TEXT_EXTS = {".txt", ".xml", ".html", ".htm", ".php", ".css", ".js", ".json", ".md"}
 
