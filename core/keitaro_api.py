@@ -567,30 +567,30 @@ def upload_zip_to_offer(
     Returns:
         True if all files uploaded successfully
     """
-        # === КРОК 1: Спробуй ZIP upload ===
+    # === КРОК 1: Спробуй ZIP upload ===
+    if verbose:
+        print(f"📦 Attempting ZIP upload for offer {offer_id}...")
+    
+    if client.upload_zip(offer_id, zip_bytes):
+        return True
+    
+    # === КРОК 2: Fallback - upload файлів ===
+    if verbose:
+        print("⚠️  ZIP upload failed, uploading files individually...")
+    
+    files = unzip_to_dict(zip_bytes)
+    
+    # === КРОК 2A: Знайди всі папки ===
+    folders = set()
+    for path in files.keys():
+        if "/" in path:
+            folder = path.split("/")[0]  # Тільки перша папка!
+            folders.add(folder)
+    
+    # === КРОК 2B: Створи .keep для кожної папки ===
+    if folders:
         if verbose:
-            print(f"📦 Attempting ZIP upload for offer {offer_id}...")
-        
-        if client.upload_zip(offer_id, zip_bytes):
-            return True
-        
-        # === КРОК 2: Fallback - upload файлів ===
-        if verbose:
-            print("⚠️  ZIP upload failed, uploading files individually...")
-        
-        files = unzip_to_dict(zip_bytes)
-        
-        # === КРОК 2A: Знайди всі папки ===
-        folders = set()
-        for path in files.keys():
-            if "/" in path:
-                folder = path.split("/")[0]  # Тільки перша папка!
-                folders.add(folder)
-        
-        # === КРОК 2B: Створи .keep для кожної папки ===
-        if folders:
-            if verbose:
-                print(f"📁 Creating directories: {', '.join(folders)}")
+            print(f"📁 Creating directories: {', '.join(folders)}")
             
             for folder in folders:
                 keep_path = f"{folder}/.keep"
