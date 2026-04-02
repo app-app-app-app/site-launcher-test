@@ -587,27 +587,10 @@ def upload_zip_to_offer(
             folder = path.split("/")[0]  # Тільки перша папка!
             folders.add(folder)
     
-    # === КРОК 2B: Створи .keep для кожної папки ===
-    if folders:
-        if verbose:
-            print(f"📁 Creating directories: {', '.join(folders)}")
-            
-            for folder in folders:
-                keep_path = f"{folder}/.keep"
-                
-                # Спробуй створити .keep файл
-                success = client.upload_file(
-                    offer_id,
-                    keep_path,
-                    b""  # Порожній файл
-                )
-                
-                if success:
-                    if verbose:
-                        print(f"  ✅ Created directory: {folder}/")
-                else:
-                    if verbose:
-                        print(f"  ⚠️  Could not create directory: {folder}/")
+    # === КРОК 2B: Папки ===
+    # Keitaro API часто не допускає створення папок
+    # Тому файли в папках можуть падати - але це OK
+    # Wе просто спробуємо завантажити усі файли як є
         
         # === КРОК 3: Видали проблемні файли ===
         for problem_file in ["index.php", "_preview.png"]:
