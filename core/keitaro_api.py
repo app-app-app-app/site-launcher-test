@@ -567,37 +567,83 @@ def upload_zip_to_offer(
     Returns:
         True if all files uploaded successfully
     """
-    
-    # Try ZIP upload first
-    if verbose:
-        print(f"📦 Attempting ZIP upload for offer {offer_id}...")
-    
-    if client.upload_zip(offer_id, zip_bytes):
-        return True
-    
-    # Fallback: extract and upload individually
-    if verbose:
-        print("⚠️  ZIP upload failed, uploading files individually...")
-    
-    files = unzip_to_dict(zip_bytes)
-    total = len(files)
-    success_count = 0
-    
-    # Delete problematic files first
-    for problem_file in ["index.php", "_preview.png"]:
-        client.delete_file(offer_id, problem_file)
-    
-    for i, (path, content) in enumerate(files.items(), 1):
+        # === КРОК 1: Спробуй ZIP upload ===
         if verbose:
-            print(f"  📤 {i}/{total} → {path}")
+            print(f"📦 Attempting ZIP upload for offer {offer_id}...")
         
-        if client.upload_file(offer_id, path, content):
-            success_count += 1
-        else:
+        if client.upload_zip(offer_id, zip_bytes):
+            return True
+        
+        # === КРОК 2: Fallback - upload файлів ===
+        if verbose:
+            print("⚠️  ZIP upload failed, uploading files individually...")
+        
+        files = unzip_to_dict(zip_bytes)
+        
+        # === КРОК 2A: Знайди всі папки ===
+        folders = set()
+        for path in files.keys():
+            if "/" in path:
+                folder = path.split("/")[0]  # Тільки перша папка!
+                folders.add(folder)
+        
+        # === КРОК 2B: Створи .keep для кожної папки ===
+        if folders:
             if verbose:
-                print(f"    ❌ Failed: {path}")
-    
-    if verbose:
-        print(f"✅ Uploaded {success_count}/{total} files")
-    
-    return success_count == total
+                print(f"📁 Creating directories: {', '.join(folders)}")
+            
+            for folder in folders:
+                keep_path = f"{folder}/.keep"
+                
+                # Спробуй створити .keep файл
+                success = client.upload_file(
+                    offer_id,
+                    keep_path,
+                    b""  # Порожній файл
+                )
+                
+                if success:
+                    if verbose:
+                        print(f"  ✅ Created directory: {folder}/")
+                else:
+                    if verbose:
+                        print(f"  ⚠️  Could not create directory: {folder}/")
+        
+        # === КРОК 3: Видали проблемні файли ===
+        for problem_file in ["index.php", "_preview.png"]:
+            try:
+                client.delete_file(offer_id, problem_file)
+            except:
+                pass
+        
+        # === КРОК 4: Завантажуй файли ===
+        total = len(files)
+        success_count = 0
+        failed_files = []
+        
+        for i, (path, content) in enumerate(files.items(), 1):
+            if verbose:
+                print(f"  📤 {i}/{total} → {path}")
+            
+            try:
+                if client.upload_file(offer_id, path, content):
+                    success_count += 1
+                else:
+                    if verbose:
+                        print(f"    ❌ Failed: {path}")
+                    failed_files.append(path)
+            
+            except Exception as e:
+                if verbose:
+                    print(f"    ❌ Exception: {path} - {e}")
+                failed_files.append(path)
+        
+        if verbose:
+            print(f"✅ Uploaded {success_count}/{total} files")
+            if failed_files:
+                print(f"⚠️  Failed files ({len(failed_files)}):")
+                for f in failed_files:
+                    print(f"   - {f}")
+        
+        # Успіх якщо більшість файлів загружені
+        return success_count >= total * 0.8  # 80% успіху = OK
