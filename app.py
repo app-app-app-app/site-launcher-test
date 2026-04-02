@@ -37,6 +37,47 @@ from core.config import Config, init_app, Monitor, handle_error
 # ---- Page config (must be before any st.* calls) ----
 TEMPLATE_ID = 373
 
+
+@st.cache_resource
+def init_google_sheets():
+    """
+    Ініціалізація Google Sheets (ДОБАВИТИ В app.py)
+    """
+    try:
+        # Перевір чи налаштовано Sheets
+        try:
+            creds = st.secrets.get("gcp", {}).get("credentials")
+            sheet_id = st.secrets.get("sheets", {}).get("spreadsheet_id")
+            
+            if not creds or not sheet_id:
+                st.warning("⚠️  Google Sheets не налаштований")
+                return None
+        
+        except Exception:
+            st.warning("⚠️  Не можу прочитати secrets для Google Sheets")
+            return None
+        
+        # Ініціалізуй
+        from core.google_sheets import GoogleSheetsManager
+        import json
+        
+        sheets = GoogleSheetsManager(
+            credentials_json=json.loads(creds) if isinstance(creds, str) else creds,
+            spreadsheet_id=sheet_id,
+            sheet_name="Запуски"
+        )
+        
+        # Setup header
+        sheets.setup_header()
+        
+        st.success("✅ Google Sheets OK")
+        return sheets
+    
+    except Exception as e:
+        st.error(f"❌ Google Sheets error: {e}")
+        return None
+
+
 def _get_favicon():
     # Page icon in the browser tab (cheap status indicator).
     step = int(st.session_state.get("step", 1))
@@ -109,6 +150,7 @@ def init_keitaro():
 
 
 client = init_keitaro()
+sheets = init_google_sheets()
 
 
 st.markdown("""
