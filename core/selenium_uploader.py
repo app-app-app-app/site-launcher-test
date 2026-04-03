@@ -27,14 +27,17 @@ def upload_zip_to_keitaro(keitaro_url, username, password, zip_file_path, offer_
     """
     
     options = webdriver.ChromeOptions()
-    options.add_argument('--headless')
+    options.add_argument('--headless=new')
     options.add_argument('--no-sandbox')
     options.add_argument('--disable-dev-shm-usage')
     options.add_argument('--disable-blink-features=AutomationControlled')
     options.add_experimental_option("excludeSwitches", ["enable-automation"])
     options.add_experimental_option('useAutomationExtension', False)
     
-    driver = webdriver.Chrome(options=options)
+    from selenium.webdriver.chrome.service import Service
+
+    service = Service('/usr/bin/chromedriver')
+    driver = webdriver.Chrome(service=service, options=options)
     
     try:
         print(f"🔐 Логинюсь в Keitaro ({keitaro_url})...")
