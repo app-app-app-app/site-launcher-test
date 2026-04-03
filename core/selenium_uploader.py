@@ -10,54 +10,56 @@ import os
 def upload_zip_to_keitaro(keitaro_url, username, password, zip_file_path, offer_name):
 
     options = webdriver.ChromeOptions()
+
+    # --- ОБОВʼЯЗКОВО ДЛЯ STREAMLIT CLOUD ---
     options.add_argument('--headless=new')
     options.add_argument('--no-sandbox')
     options.add_argument('--disable-dev-shm-usage')
-    options.add_argument('--disable-blink-features=AutomationControlled')
+
+    # --- ФІКС SSL ---
     options.add_argument('--ignore-certificate-errors')
     options.add_argument('--ignore-ssl-errors')
     options.add_argument('--allow-insecure-localhost')
-    options.add_argument('--ignore-certificate-errors-spki-list')
-    
+
+    # --- СТАБІЛЬНІСТЬ ---
+    options.add_argument('--disable-blink-features=AutomationControlled')
 
     service = Service('/usr/bin/chromedriver')
     driver = webdriver.Chrome(service=service, options=options)
 
-    wait = WebDriverWait(driver, 20)
+    wait = WebDriverWait(driver, 25)
 
     try:
         print(f"🔐 Login to Keitaro: {keitaro_url}")
 
         # --- 1. OPEN ADMIN ---
         driver.get(f"{keitaro_url}/admin/")
-        
-        # даємо сторінці шанс прогрузитись
+
+        # --- DEBUG (можеш закоментити потім) ---
         time.sleep(3)
-        
+        print("CURRENT URL:", driver.current_url)
         html = driver.page_source
-        
-        import streamlit as st
-        
-        st.write("CURRENT URL:", driver.current_url)
-        st.write("PAGE LENGTH:", len(html))
-        st.text(html[:1500])
+        print("PAGE LENGTH:", len(html))
+        print(html[:1000])
 
-        # wait for Angular login form
+        # --- 2. WAIT ANGULAR APP ---
         wait.until(
-            EC.presence_of_element_located((By.CSS_SELECTOR, "div.login-form"))
+            EC.visibility_of_element_located((By.CSS_SELECTOR, "app-login"))
         )
 
-        print("✅ Login page loaded")
+        print("✅ Angular login loaded")
 
-        # --- 2. LOGIN ---
+        # --- 3. LOGIN ---
         username_field = wait.until(
-            EC.presence_of_element_located((By.NAME, "login"))
+            EC.visibility_of_element_located((By.NAME, "login"))
         )
+        username_field.clear()
         username_field.send_keys(username)
 
         password_field = wait.until(
-            EC.presence_of_element_located((By.NAME, "password"))
+            EC.visibility_of_element_located((By.NAME, "password"))
         )
+        password_field.clear()
         password_field.send_keys(password)
 
         submit_btn = wait.until(
@@ -67,20 +69,29 @@ def upload_zip_to_keitaro(keitaro_url, username, password, zip_file_path, offer_
 
         print("⏳ Logging in...")
 
-        # wait after login
-        time.sleep(3)
+        time.sleep(4)
 
-        # --- 3. OPEN CREATE OFFER ---
-        driver.get(f"{keitaro_url}/offers/create")
+        # --- 4. OPEN CREATE OFFER ---
+        driver.get(f"{keitaro_url}/admin/#!/offers/new")
 
-        print("📁 Opened create offer page")
+        print("📁 Open create offer page")
 
-        # --- 4. WAIT PAGE ---
+        # --- 5. WAIT PAGE ---
         wait.until(
-            EC.presence_of_element_located((By.TAG_NAME, "body"))
+            EC.visibility_of_element_located((By.TAG_NAME, "body"))
         )
 
-        # --- 5. SELECT LOCAL ---
+        time.sleep(2)
+
+        # --- 6. OFFER NAME ---
+        name_field = wait.until(
+            EC.visibility_of_element_located((By.NAME, "name"))
+        )
+        name_field.send_keys(offer_name)
+
+        print(f"✍️ Offer name: {offer_name}")
+
+        # --- 7. SELECT LOCAL (якщо є) ---
         try:
             local_radio = wait.until(
                 EC.element_to_be_clickable((By.CSS_SELECTOR, "input[value='local']"))
@@ -89,15 +100,7 @@ def upload_zip_to_keitaro(keitaro_url, username, password, zip_file_path, offer_
         except:
             print("⚠️ Local radio not found (skip)")
 
-        # --- 6. OFFER NAME ---
-        name_field = wait.until(
-            EC.presence_of_element_located((By.NAME, "name"))
-        )
-        name_field.send_keys(offer_name)
-
-        print(f"✍️ Offer name: {offer_name}")
-
-        # --- 7. UPLOAD ZIP ---
+        # --- 8. UPLOAD ZIP ---
         abs_path = os.path.abspath(zip_file_path)
 
         file_input = wait.until(
@@ -107,7 +110,7 @@ def upload_zip_to_keitaro(keitaro_url, username, password, zip_file_path, offer_
 
         print(f"📦 ZIP uploaded: {abs_path}")
 
-        # --- 8. CREATE ---
+        # --- 9. CREATE ---
         submit_btn = wait.until(
             EC.element_to_be_clickable((By.CSS_SELECTOR, "button[type='submit']"))
         )
@@ -117,18 +120,16 @@ def upload_zip_to_keitaro(keitaro_url, username, password, zip_file_path, offer_
 
         time.sleep(5)
 
-        # --- 9. GET OFFER ID ---
+        # --- 10. GET OFFER ID ---
         current_url = driver.current_url
-        print("URL:", current_url)
+        print("FINAL URL:", current_url)
 
         if '/offers/' in current_url:
-            parts = current_url.split('/offers/')
-            if len(parts) > 1:
-                offer_id = parts[1].split('/')[0]
-                try:
-                    return int(offer_id)
-                except:
-                    pass
+            try:
+                offer_id = current_url.split('/offers/')[1].split('/')[0]
+                return int(offer_id)
+            except:
+                pass
 
         print("❌ Offer ID not found")
         return None
