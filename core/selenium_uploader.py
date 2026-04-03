@@ -25,11 +25,17 @@ def upload_zip_to_keitaro(keitaro_url, username, password, zip_file_path, offer_
 
         # --- 1. OPEN ADMIN ---
         driver.get(f"{keitaro_url}/admin/")
-        print("CURRENT URL:", driver.current_url)
-
+        
+        # даємо сторінці шанс прогрузитись
+        time.sleep(3)
+        
         html = driver.page_source
-        print("PAGE LENGTH:", len(html))
-        print(html[:2000])
+        
+        import streamlit as st
+        
+        st.write("CURRENT URL:", driver.current_url)
+        st.write("PAGE LENGTH:", len(html))
+        st.text(html[:1500])
 
         # wait for Angular login form
         wait.until(
