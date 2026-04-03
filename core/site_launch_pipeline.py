@@ -57,6 +57,7 @@ class SiteLaunchPipeline:
             keitaro_client: KeitaroClient instance
             google_sheets_manager: Your Google Sheets integration (optional)
         """
+        self.selenium_uploader = None  # Будет инициализирован при необходимости
         self.client = keitaro_client
         self.sheets = google_sheets_manager
     
@@ -121,14 +122,31 @@ class SiteLaunchPipeline:
                 result["offer_id"] = offer_id
                 logger.info(f"✅ Offer created: {offer_id}")
             
-            # === STEP 3: Upload ZIP ===
-            if self._progress(progress_callback, 40, f"📤 Uploading ZIP..."):
-                upload_ok = self._upload_zip(offer_id, zip_bytes)
-                
-                if not upload_ok:
-                    raise KeitaroAPIError("Failed to upload ZIP to offer")
-                
-                logger.info(f"✅ ZIP uploaded to offer {offer_id}")
+            # === КРОК 1: ZIP Upload via Selenium ===
+            from .selenium_uploader import upload_zip_to_keitaro
+            import tempfile
+            
+            # Сохраняем ZIP во временный файл
+            with tempfile.NamedTemporaryFile(suffix='.zip', delete=False) as f:
+                f.write(zip_bytes)
+                temp_zip_path = f.name
+            
+            # Загружаем через браузер вместо API
+            offer_id = upload_zip_to_keitaro(
+                keitaro_url=self.keitaro_client.base_url,
+                username="твой_логин",  # ← ЗАМЕНИ НА СВОЙ
+                password="твой_пароль",  # ← ЗАМЕНИ НА СВОЙ
+                zip_file_path=temp_zip_path,
+                offer_name=domain
+            )
+            
+            if not offer_id:
+                return {
+                    "success": False,
+                    "errors": ["Failed to upload ZIP via Selenium"]
+                }
+            
+            print(f"✅ Offer {offer_id} created via Selenium")
             
             # === STEP 4: Clone Campaign (if template provided) ===
             if template_campaign_id:
