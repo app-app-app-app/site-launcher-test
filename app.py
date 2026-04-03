@@ -32,6 +32,8 @@ from core.keitaro_api import KeitaroClient, KeitaroAPIError, upload_zip_to_offer
 from core.site_launch_pipeline import SiteLaunchPipeline, SiteLaunchConfig, validate_config
 from core.google_sheets import GoogleSheetsManager
 from core.config import Config, init_app, Monitor, handle_error
+from core.selenium_uploader import upload_zip_to_keitaro
+import tempfile
 
 
 # ---- Page config (must be before any st.* calls) ----
@@ -388,10 +390,12 @@ def launch_site_wrapper(domain, zip_bytes):
         st.error(f"❌ Помилка ініціалізації: {e}")
         return
     
-    # ✅ ШАГ 4: СТВОРЕННЯ PIPELINE
+    # ✅ ШАГ 4: СТВОРЕННЯ PIPELINE З УЧЕТНЫМИ ДАННЫМИ
     pipeline = SiteLaunchPipeline(
         keitaro_client=client,
-        google_sheets_manager=sheets  # ← ДОДАЙ sheets!
+        google_sheets_manager=sheets,
+        keitaro_username=st.secrets.get("KEITARO_USERNAME", "admin"),
+        keitaro_password=st.secrets.get("KEITARO_PASSWORD", "")
     )
     
     # ✅ ШАГ 5: ЗАПУСК З LOGGING
