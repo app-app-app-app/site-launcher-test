@@ -1627,6 +1627,39 @@ if st.session_state.step == 1:
 
     st.divider()
 
+
+    st.divider()
+    st.markdown("### 🧪 Тестовий запуск (без генерації)")
+    
+    if st.button("🚀 TEST UPLOAD ZIP", type="primary", use_container_width=True):
+    
+        try:
+            zip_path = os.path.join(os.getcwd(), "pujancafinova.com.zip")
+    
+            if not os.path.exists(zip_path):
+                st.error(f"❌ Файл не знайдено: {zip_path}")
+            else:
+                st.info("📦 Використовую готовий ZIP...")
+    
+                # виклик Selenium uploader
+                offer_id = upload_zip_to_keitaro(
+                    keitaro_url=st.secrets["KEITARO_URL"],
+                    username=st.secrets.get("KEITARO_USERNAME", "admin"),
+                    password=st.secrets.get("KEITARO_PASSWORD", ""),
+                    zip_file_path=zip_path,
+                    offer_name="TEST-UPLOAD"
+                )
+    
+                if offer_id:
+                    st.success(f"✅ Успішно! Offer ID: {offer_id}")
+                else:
+                    st.error("❌ Не вдалося створити offer")
+    
+        except Exception as e:
+            st.error(f"❌ Помилка: {e}")
+            import traceback
+            st.code(traceback.format_exc())
+
 # ---------------------------
 # STEP 2
 # ---------------------------
