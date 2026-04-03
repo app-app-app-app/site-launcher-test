@@ -14,6 +14,11 @@ def upload_zip_to_keitaro(keitaro_url, username, password, zip_file_path, offer_
     options.add_argument('--no-sandbox')
     options.add_argument('--disable-dev-shm-usage')
     options.add_argument('--disable-blink-features=AutomationControlled')
+    options.add_argument('--ignore-certificate-errors')
+    options.add_argument('--ignore-ssl-errors')
+    options.add_argument('--allow-insecure-localhost')
+    options.add_argument('--ignore-certificate-errors-spki-list')
+    
 
     service = Service('/usr/bin/chromedriver')
     driver = webdriver.Chrome(service=service, options=options)
