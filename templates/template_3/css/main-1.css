@@ -1705,6 +1705,7 @@ main {
   font-style: normal;
   font-weight: 500;
   line-height: 90%;
+  text-align: center;
 }
 .feedback__header-value {
   font-size: 1.5rem;
