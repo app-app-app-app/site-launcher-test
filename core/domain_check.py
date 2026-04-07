@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import List, Dict, Optional
+from typing import List, Dict
 from functools import lru_cache
 import requests
 from concurrent.futures import ThreadPoolExecutor, as_completed
@@ -44,9 +44,11 @@ def _rdap_bases_for(domain: str) -> List[str]:
     t = _tld(domain)
     bases: List[str] = []
 
+    # 1. HARDCODED (швидше)
     if t in HARDCODED_RDAP:
         bases.extend(HARDCODED_RDAP[t])
 
+    # 2. IANA bootstrap
     try:
         bm = _bootstrap_map()
         if t in bm:
@@ -56,6 +58,7 @@ def _rdap_bases_for(domain: str) -> List[str]:
     except Exception:
         pass
 
+    # 3. fallback
     if "https://rdap.org/domain/" not in bases:
         bases.append("https://rdap.org/domain/")
 
@@ -105,13 +108,22 @@ def check_domains_rdap(
     domains: List[str],
     timeout: float = 6.0,
     max_workers: int = 10,
-    stop_after_free: int = 5
+    stop_after_free: int = 5,
+    priority_count: int = 10,  # 🔥 нове
 ) -> List[Dict]:
     """
     🔥 ШВИДКА перевірка доменів
 
-    - паралельна
-    - зупиняється після N вільних
+    ✔ паралельна
+    ✔ гарантує перевірку топ-доменів (priority)
+    ✔ early stop тільки для другорядних
+
+    Args:
+        domains: список доменів
+        timeout: timeout HTTP
+        max_workers: кількість потоків
+        stop_after_free: зупинка після N вільних
+        priority_count: скільки перших доменів перевірити ОБОВʼЯЗКОВО
     """
 
     results: List[Dict] = []
@@ -123,11 +135,21 @@ def check_domains_rdap(
         if d and "." in d
     ]
 
+    if not clean_domains:
+        return results
+
+    # 🔥 Розбиваємо
+    priority = clean_domains[:priority_count]
+    rest = clean_domains[priority_count:]
+
+    # =========================
+    # 🔴 PHASE 1: PRIORITY
+    # =========================
     with ThreadPoolExecutor(max_workers=max_workers) as executor:
-        futures = {
-            executor.submit(_check_one_domain, d, timeout): d
-            for d in clean_domains
-        }
+        futures = [
+            executor.submit(_check_one_domain, d, timeout)
+            for d in priority
+        ]
 
         for future in as_completed(futures):
             res = future.result()
@@ -136,8 +158,24 @@ def check_domains_rdap(
             if res["status"] == "free":
                 free_count += 1
 
-            # 🔥 EARLY STOP (найбільший буст UX)
-            if free_count >= stop_after_free:
-                break
+    # =========================
+    # 🔴 PHASE 2: REST + EARLY STOP
+    # =========================
+    if rest:
+        with ThreadPoolExecutor(max_workers=max_workers) as executor:
+            futures = {
+                executor.submit(_check_one_domain, d, timeout): d
+                for d in rest
+            }
+
+            for future in as_completed(futures):
+                res = future.result()
+                results.append(res)
+
+                if res["status"] == "free":
+                    free_count += 1
+
+                if free_count >= stop_after_free:
+                    break
 
     return results
