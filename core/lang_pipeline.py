@@ -149,6 +149,12 @@ CRYPTO_IMAGES = {
     "FR":"france.png",
     "CA":"canada.png",
     "CH":"switzerland.png",
+    "NZ":"new-zealand.png",
+    "FI":"finland.png",
+    "AU":"australia.png",
+    "NL":"netherlands.png",
+    "IE":"ireland.png",
+    "BE":"belgium.png",
 }
 
 # -----------------------------
