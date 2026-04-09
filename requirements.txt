@@ -14,3 +14,27 @@ google-auth-httplib2
 google-api-python-client
 selenium
 
+streamlit>=1.28.0
+requests>=2.31.0
+google-auth>=2.25.0
+google-auth-oauthlib>=1.2.0
+google-auth-httplib2>=0.2.0
+google-api-python-client>=2.100.0
+python-dotenv>=1.0.0
+urllib3>=2.1.0
+ 
+# Selenium для браузерной автоматизации
+selenium>=4.15.0
+webdriver-manager>=4.0.0
+ 
+# Для работы с ZIP файлами
+zipfile-deflate>=0.1.1
+ 
+# Для парсинга HTML
+beautifulsoup4>=4.12.0
+ 
+# Для DNS проверок (опционально, для мониторинга домена)
+dnspython>=2.4.0
+ 
+# Для чтения/записи Excel файлов (если понадобится)
+openpyxl>=3.1.0
