@@ -401,13 +401,28 @@ def launch_site_wrapper(domain, zip_bytes):
     # ✅ ШАГ 5: ЗАПУСК З LOGGING
     progress_bar = st.progress(0)
     status = st.empty()
+    logs_container = st.empty()  # ← ДЛЯ ЛОГІВ
+    
+    # Perехопимо stdout для Selenium логів
+    import sys
+    from io import StringIO
+    
+    log_buffer = StringIO()
+    old_stdout = sys.stdout
     
     def on_progress(percent, message):
-        progress_bar.progress(percent / 100)
+        progress_bar.progress(min(percent / 100, 1.0))
         status.info(message)
+        # Показуємо логи
+        current_logs = log_buffer.getvalue()
+        if current_logs:
+            logs_container.code(current_logs, language="log")
     
     # ✅ ШАГ 6: СПРОБУЙ ЗАПУСТИТИ
     try:
+        # Перенаправляємо stdout для перехоплення логів Selenium
+        sys.stdout = log_buffer
+        
         on_progress(0, f"🚀 Запускаю {domain}...")
         
         result = pipeline.launch_site(
@@ -419,6 +434,14 @@ def launch_site_wrapper(domain, zip_bytes):
             template_campaign_id=TEMPLATE_ID,  # 373
             progress_callback=on_progress
         )
+        
+        # Повертаємо stdout назад
+        sys.stdout = old_stdout
+        
+        # Показуємо фінальні логи
+        final_logs = log_buffer.getvalue()
+        if final_logs:
+            st.code(final_logs, language="log")
         
         on_progress(100, f"✅ Готово!")
         
@@ -434,6 +457,14 @@ def launch_site_wrapper(domain, zip_bytes):
                 st.write(f"  • {error}")
     
     except Exception as e:
+        # Повертаємо stdout назад
+        sys.stdout = old_stdout
+        
+        # Показуємо логи навіть при помилці
+        final_logs = log_buffer.getvalue()
+        if final_logs:
+            st.code(final_logs, language="log")
+        
         st.error(f"❌ {domain}: Критична помилка: {e}")
         import traceback
         st.write(traceback.format_exc())
@@ -1626,39 +1657,6 @@ if st.session_state.step == 1:
         st.caption("Щоб перейти на Крок 2, спочатку натисни “Я перевірив SERP”.")
 
     st.divider()
-
-
-    st.divider()
-    st.markdown("### 🧪 Тестовий запуск (без генерації)")
-    
-    if st.button("🚀 TEST UPLOAD ZIP", type="primary", use_container_width=True):
-    
-        try:
-            zip_path = os.path.join(os.getcwd(), "pujancafinova.com.zip")
-    
-            if not os.path.exists(zip_path):
-                st.error(f"❌ Файл не знайдено: {zip_path}")
-            else:
-                st.info("📦 Використовую готовий ZIP...")
-    
-                # виклик Selenium uploader
-                offer_id = upload_zip_to_keitaro(
-                    keitaro_url=st.secrets["KEITARO_URL"],
-                    username=st.secrets.get("KEITARO_USERNAME", "admin"),
-                    password=st.secrets.get("KEITARO_PASSWORD", ""),
-                    zip_file_path=zip_path,
-                    offer_name="TEST-UPLOAD"
-                )
-    
-                if offer_id:
-                    st.success(f"✅ Успішно! Offer ID: {offer_id}")
-                else:
-                    st.error("❌ Не вдалося створити offer")
-    
-        except Exception as e:
-            st.error(f"❌ Помилка: {e}")
-            import traceback
-            st.code(traceback.format_exc())
 
 # ---------------------------
 # STEP 2
