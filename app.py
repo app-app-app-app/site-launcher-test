@@ -33,7 +33,6 @@ from core.site_launch_pipeline import SiteLaunchPipeline, SiteLaunchConfig, vali
 from core.google_sheets import GoogleSheetsManager
 from core.config import Config, init_app, Monitor, handle_error
 from core.selenium_uploader import upload_zip_to_keitaro
-import tempfile
 
 
 # ---- Page config (must be before any st.* calls) ----
@@ -390,39 +389,22 @@ def launch_site_wrapper(domain, zip_bytes):
         st.error(f"❌ Помилка ініціалізації: {e}")
         return
     
-    # ✅ ШАГ 4: СТВОРЕННЯ PIPELINE З УЧЕТНЫМИ ДАННЫМИ
+    # ✅ ШАГ 4: СТВОРЕННЯ PIPELINE
     pipeline = SiteLaunchPipeline(
         keitaro_client=client,
-        google_sheets_manager=sheets,
-        keitaro_username=st.secrets.get("KEITARO_USERNAME", "admin"),
-        keitaro_password=st.secrets.get("KEITARO_PASSWORD", "")
+        google_sheets_manager=sheets  # ← ДОДАЙ sheets!
     )
     
     # ✅ ШАГ 5: ЗАПУСК З LOGGING
     progress_bar = st.progress(0)
     status = st.empty()
-    logs_container = st.empty()  # ← ДЛЯ ЛОГІВ
-    
-    # Perехопимо stdout для Selenium логів
-    import sys
-    from io import StringIO
-    
-    log_buffer = StringIO()
-    old_stdout = sys.stdout
     
     def on_progress(percent, message):
-        progress_bar.progress(min(percent / 100, 1.0))
+        progress_bar.progress(percent / 100)
         status.info(message)
-        # Показуємо логи
-        current_logs = log_buffer.getvalue()
-        if current_logs:
-            logs_container.code(current_logs, language="log")
     
     # ✅ ШАГ 6: СПРОБУЙ ЗАПУСТИТИ
     try:
-        # Перенаправляємо stdout для перехоплення логів Selenium
-        sys.stdout = log_buffer
-        
         on_progress(0, f"🚀 Запускаю {domain}...")
         
         result = pipeline.launch_site(
@@ -434,14 +416,6 @@ def launch_site_wrapper(domain, zip_bytes):
             template_campaign_id=TEMPLATE_ID,  # 373
             progress_callback=on_progress
         )
-        
-        # Повертаємо stdout назад
-        sys.stdout = old_stdout
-        
-        # Показуємо фінальні логи
-        final_logs = log_buffer.getvalue()
-        if final_logs:
-            st.code(final_logs, language="log")
         
         on_progress(100, f"✅ Готово!")
         
@@ -457,14 +431,6 @@ def launch_site_wrapper(domain, zip_bytes):
                 st.write(f"  • {error}")
     
     except Exception as e:
-        # Повертаємо stdout назад
-        sys.stdout = old_stdout
-        
-        # Показуємо логи навіть при помилці
-        final_logs = log_buffer.getvalue()
-        if final_logs:
-            st.code(final_logs, language="log")
-        
         st.error(f"❌ {domain}: Критична помилка: {e}")
         import traceback
         st.write(traceback.format_exc())
@@ -1757,6 +1723,91 @@ elif st.session_state.step == 2:
                 lang_code=st.session_state.target_lang,
                 domains=st.session_state.chosen_domains
             )
+        if st.button("🧪 TEST SELENIUM (отладка)"):
+            """Тестируем Selenium логин без архива"""
+            
+            username = st.secrets.get("KEITARO_USERNAME", "admin")
+            password = st.secrets.get("KEITARO_PASSWORD", "")
+            url = st.secrets.get("KEITARO_URL")
+            
+            if not url or not password:
+                st.error("❌ KEITARO_URL и KEITARO_PASSWORD не налаштовані в secrets.toml")
+                st.stop()
+            
+            st.info("🧪 Тестирую Selenium логин в Keitaro...")
+            
+            # Тестируем только логин (без ZIP)
+            from selenium import webdriver
+            from selenium.webdriver.common.by import By
+            import time
+            
+            try:
+                options = webdriver.ChromeOptions()
+                options.add_argument('--headless')
+                options.add_argument('--no-sandbox')
+                options.add_argument('--disable-dev-shm-usage')
+                
+                st.write("📥 Запускаю Chrome...")
+                driver = webdriver.Chrome(options=options)
+                
+                # Normalize URL
+                if not url.startswith('http'):
+                    url = f'http://{url}'
+                
+                st.write(f"🔐 Логинюсь в {url}/login...")
+                driver.get(f"{url}/login")
+                time.sleep(4)
+                
+                st.write("✍️ Заполняю форму...")
+                
+                # Find fields
+                try:
+                    username_field = driver.find_element(By.NAME, "login")
+                    st.write("   ✓ Username field найдено")
+                except:
+                    username_field = driver.find_element(By.XPATH, "//input[@type='text']")
+                    st.write("   ✓ Username field найдено (fallback)")
+                
+                username_field.send_keys(username)
+                time.sleep(0.5)
+                
+                try:
+                    password_field = driver.find_element(By.NAME, "password")
+                    st.write("   ✓ Password field найдено")
+                except:
+                    password_field = driver.find_element(By.XPATH, "//input[@type='password']")
+                    st.write("   ✓ Password field найдено (fallback)")
+                
+                password_field.send_keys(password)
+                time.sleep(0.5)
+                
+                try:
+                    submit_btn = driver.find_element(By.XPATH, "//button[@type='submit']")
+                    submit_btn.click()
+                    st.write("🖱 Кликнул на Submit")
+                except:
+                    password_field.send_keys("\n")
+                    st.write("🖱 Использовал ENTER")
+                
+                time.sleep(5)
+                
+                current_url = driver.current_url
+                st.write(f"🌐 URL: {current_url}")
+                
+                driver.quit()
+                
+                if '/login' in current_url:
+                    st.error("❌ LOGIN FAILED - все ещё на странице логина")
+                    st.error(f"Проверь username/password в secrets.toml")
+                else:
+                    st.success(f"✅ LOGIN SUCCESS! Selenium работает!")
+                    st.success(f"Можешь теперь нажать обычную кнопку LAUNCH")
+            
+            except Exception as e:
+                st.error(f"❌ Ошибка: {e}")
+                import traceback
+                st.write(traceback.format_exc())
+        
         if st.button("🚀 LAUNCH"):
         
             domains = st.session_state.get("chosen_domains") or []
